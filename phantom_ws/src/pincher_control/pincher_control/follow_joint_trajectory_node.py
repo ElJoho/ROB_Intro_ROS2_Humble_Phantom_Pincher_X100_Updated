@@ -1,4 +1,27 @@
 # pincher_control/follow_joint_trajectory_node.py
+#
+# Este nodo conecta MoveIt con el hardware real del PhantomX Pincher usando
+# el SDK de Dynamixel. Expone DOS servidores de acción FollowJointTrajectory:
+#
+#   1) /joint_trajectory_controller/follow_joint_trajectory  → grupo "arm" en MoveIt
+#   2) /gripper_trajectory_controller/follow_joint_trajectory → grupo "gripper" en MoveIt
+#
+# La idea es:
+#   - MoveIt calcula una trayectoria articular para el brazo o el gripper.
+#   - Envía un goal FollowJointTrajectory al action server correspondiente.
+#   - Este nodo convierte las posiciones (radianes) a ticks del AX-12A y
+#     envía los comandos de posición a los servos reales.
+#   - Además publica /joint_states con las posiciones COMANDADAS para que
+#     robot_state_publisher y MoveIt conozcan el estado actual del robot.
+#
+# NOTA:
+#   El gripper real se mueve con UN solo motor. En el URDF/SRDF hay dos joints
+#   para las “uñitas” (finger1 y finger2), pero aquí ambas se mapean al MISMO
+#   ID de servo. De esta forma:
+#     phantomx_pincher_gripper_finger1_joint → ID_GRIPPER
+#     phantomx_pincher_gripper_finger2_joint → ID_GRIPPER
+#   En cada punto de trayectoria se envía un solo comando a ese servo, aunque
+#   se actualicen las dos joints en /joint_states.
 
 import math
 import time
@@ -19,105 +42,102 @@ ADDR_GOAL_POSITION    = 30
 ADDR_MOVING_SPEED     = 32
 ADDR_TORQUE_LIMIT     = 34
 
+# Rango básico de ticks en AX-12A (0–1023)
 DXL_MIN_TICK = 0
 DXL_MAX_TICK = 1023
 
 
 class PincherFollowJointTrajectory(Node):
     """
-    Nodo que expone un Action Server FollowJointTrajectory para el grupo 'arm'
-    del PhantomX Pincher y envía los comandos a los servos Dynamixel AX-12A.
+    Nodo principal que implementa:
+      - ActionServer FollowJointTrajectory para el brazo:
+          /joint_trajectory_controller/follow_joint_trajectory
+      - ActionServer FollowJointTrajectory para el gripper:
+          /gripper_trajectory_controller/follow_joint_trajectory
 
-    Este nodo está pensado para que MoveIt actúe como cliente de acción:
-      - MoveIt planifica una trayectoria para el grupo 'arm'
-      - Envía un goal FollowJointTrajectory al action server
-      - Este nodo convierte las posiciones (radianes) a ticks y las manda
-        a los servos en los tiempos indicados en time_from_start
+    Ambos servers usan la MISMA lógica:
+      * goal_callback → valida que las joints sean conocidas.
+      * execute_callback → recorre los puntos de la trayectoria respetando
+        time_from_start y manda las posiciones a los servos Dynamixel.
 
     Además:
-      - Publica /joint_states con las posiciones COMANDADAS (en radianes) para
-        que robot_state_publisher y MoveIt puedan conocer el estado actual.
-
-    NOTA SOBRE GRIPPER:
-      - Más abajo hay líneas COMENTADAS para incluir el gripper:
-          phantomx_pincher_gripper_finger1_joint
-          phantomx_pincher_gripper_finger2_joint
-      - Asumen que ambos dedos están acoplados al MISMO servo (ej. ID 5).
-      - Cuando quieras usarlo, descomenta esas líneas y ajusta IDs si es necesario
-        y asegúrate de que el controlador de MoveIt incluya también esas joints.
+      - Publica /joint_states con las posiciones COMANDADAS (brazo + gripper).
+      - Convierte radianes del modelo de MoveIt a ticks (0–1023) de los AX-12A.
     """
 
     def __init__(self):
         super().__init__("pincher_follow_joint_trajectory")
 
-        # ---------------- Parámetros configurables ----------------
+        # -------------- Parámetros configurables del nodo --------------
         # Puerto serie donde está conectado el adaptador (U2D2, etc.)
         self.declare_parameter("port", "/dev/ttyUSB0")
         # Baudrate del bus Dynamixel
         self.declare_parameter("baudrate", 1000000)
-        # Prefijo de joints (por defecto phantomx_pincher_)
+        # Prefijo de joints según el URDF (por defecto phantomx_pincher_)
         self.declare_parameter("joint_prefix", "phantomx_pincher_")
         # Velocidad de movimiento (0–1023)
         self.declare_parameter("moving_speed", 200)
         # Límite de torque (0–1023)
-        self.declare_parameter("torque_limit", 800)
+        self.declare_parameter("torque_limit", 400)
+        # ID del servo que mueve el gripper real
+        self.declare_parameter("gripper_id", 5)
 
         port_name = self.get_parameter("port").get_parameter_value().string_value
         baudrate = self.get_parameter("baudrate").get_parameter_value().integer_value
         prefix   = self.get_parameter("joint_prefix").get_parameter_value().string_value
         moving_speed = self.get_parameter("moving_speed").get_parameter_value().integer_value
         torque_limit = self.get_parameter("torque_limit").get_parameter_value().integer_value
+        gripper_id   = self.get_parameter("gripper_id").get_parameter_value().integer_value
 
-        # ---------------- Mapa joint_name → ID de Dynamixel ----------------
-        # AJUSTA ESTO según tus IDs reales en el robot físico.
+        # ------------ Mapa joint_name → ID de servo Dynamixel ------------
         #
-        # Los nombres de joints vienen del URDF / SRDF:
-        #   phantomx_pincher_arm_shoulder_pan_joint
-        #   phantomx_pincher_arm_shoulder_lift_joint
-        #   phantomx_pincher_arm_elbow_flex_joint
-        #   phantomx_pincher_arm_wrist_flex_joint
+        # IMPORTANTE: ajusta estos IDs a tu robot real.
         #
-        # Aquí asumimos:
-        #   ID 1 → shoulder pan
-        #   ID 2 → shoulder lift
-        #   ID 3 → elbow flex
-        #   ID 4 → wrist flex
+        # BRAZO:
+        #   phantomx_pincher_arm_shoulder_pan_joint   → ID 1
+        #   phantomx_pincher_arm_shoulder_lift_joint  → ID 2
+        #   phantomx_pincher_arm_elbow_flex_joint     → ID 3
+        #   phantomx_pincher_arm_wrist_flex_joint     → ID 4
+        #
+        # GRIPPER:
+        #   phantomx_pincher_gripper_finger1_joint    → ID gripper_id
+        #   phantomx_pincher_gripper_finger2_joint    → ID gripper_id (mismo servo)
+        #
+        # MoveIt enviará trayectorias separadas para el grupo arm y el grupo
+        # gripper usando distintos controladores, pero aquí solo nos importa
+        # el nombre de las joints.
         self.joint_to_id = {
+            # Brazo (4 DOF)
             f"{prefix}arm_shoulder_pan_joint":   1,
             f"{prefix}arm_shoulder_lift_joint":  2,
             f"{prefix}arm_elbow_flex_joint":     3,
             f"{prefix}arm_wrist_flex_joint":     4,
-
-            # ------------- GRIPPER (OPCIONAL – COMENTADO) -------------
-            # Si tu gripper está controlado por un único servo (ej. ID 5),
-            # y el URDF tiene dos joints (finger1 y finger2) unidas por mimic,
-            # puedes mapear ambas al mismo ID de servo así:
-            #
-            # f"{prefix}gripper_finger1_joint": 5,
-            # f"{prefix}gripper_finger2_joint": 5,
-            #
-            # ⚠️ Cuando actives esto:
-            #   - Asegúrate de que MoveIt use un controlador que incluya estas
-            #     joints en su lista (en el YAML de controladores).
-            #   - Vigila que las trayectorias que lleguen tengan posiciones
-            #     coherentes para ambas joints (normalmente serán simétricas).
+            # Gripper (las dos fingers usan el mismo servo físico)
+            f"{prefix}gripper_finger1_joint":    gripper_id,
+            f"{prefix}gripper_finger2_joint":    gripper_id,
         }
 
         self.get_logger().info(f"Mapa joint→ID: {self.joint_to_id}")
 
-        # Lista fija de joints para publicar en /joint_states
-        self.joint_names = list(self.joint_to_id.keys())
+        # Lista de joints para /joint_states:
+        #   - Todas las actuadas (keys de joint_to_id).
+        #   - Más la joint “central” del gripper (gripper_joint) que es pasiva
+        #     en este nodo pero existe en el URDF/SRDF y MoveIt la espera.
+        self.prefix = prefix
+        self.joint_state_names = list(self.joint_to_id.keys()) + [
+            f"{prefix}gripper_joint",
+        ]
 
-        # Estado actual COMANDADO (en radianes) de cada joint
-        # Inicialmente asumimos 0.0 rad (equivalente a ~512 ticks en nuestro modelo)
-        self.current_positions = {name: 0.0 for name in self.joint_names}
+        # Estado actual COMANDADO (en radianes) de cada joint.
+        # Inicialmente asumimos 0.0 rad.
+        self.current_positions = {name: 0.0 for name in self.joint_state_names}
 
-        # Publisher de /joint_states + timer periódico
+        # Publisher de /joint_states + timer periódico (50 Hz)
         self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
-        # 50 Hz (0.02 s) es más que suficiente
         self.joint_state_timer = self.create_timer(0.02, self.publish_joint_states)
 
-        # ---------------- Inicializar comunicación Dynamixel ----------------
+        # -------------- Inicialización de comunicación Dynamixel --------------
+        # Abre el puerto serie y configura el baudrate.
         self.port = PortHandler(port_name)
         if not self.port.openPort():
             self.get_logger().error(f"No se pudo abrir el puerto {port_name}")
@@ -130,7 +150,9 @@ class PincherFollowJointTrajectory(Node):
         # AX-12A usan protocolo 1.0
         self.packet = PacketHandler(1.0)
 
-        # Configurar cada servo: torque, velocidad, etc.
+        # Configura cada servo: límite de torque, velocidad, torque enable.
+        # Nota: el ID del gripper puede aparecer dos veces (finger1/finger2),
+        # pero escribir los mismos valores dos veces no es un problema.
         for joint_name, dxl_id in self.joint_to_id.items():
             # Límite de torque
             self.packet.write2ByteTxRx(self.port, dxl_id, ADDR_TORQUE_LIMIT, torque_limit)
@@ -141,13 +163,18 @@ class PincherFollowJointTrajectory(Node):
 
         self.get_logger().info(
             f"Conectado a Dynamixel en {port_name} @ {baudrate} baud. "
-            f"Velocidad={moving_speed}, Torque limit={torque_limit}"
+            f"Velocidad={moving_speed}, Torque limit={torque_limit}, gripper_id={gripper_id}"
         )
 
-        # ---------------- Action Server FollowJointTrajectory ----------------
-        # Nombre del action server: /joint_trajectory_controller/follow_joint_trajectory
-        # Debe coincidir con la configuración de controladores de MoveIt.
-        self._action_server = ActionServer(
+        # -------------- Action Servers FollowJointTrajectory --------------
+        # 1) Action server del BRAZO:
+        #    Nombre del controlador en MoveIt:
+        #      joint_trajectory_controller
+        #    Action namespace:
+        #      follow_joint_trajectory
+        #    → nombre completo del action server:
+        #      /joint_trajectory_controller/follow_joint_trajectory
+        self._arm_action_server = ActionServer(
             self,
             FollowJointTrajectory,
             "joint_trajectory_controller/follow_joint_trajectory",
@@ -156,18 +183,42 @@ class PincherFollowJointTrajectory(Node):
             execute_callback=self.execute_callback,
         )
 
-        self.get_logger().info(
-            "Action server FollowJointTrajectory listo en "
-            "'/joint_trajectory_controller/follow_joint_trajectory'"
+        # 2) Action server del GRIPPER:
+        #    Nombre del controlador en MoveIt:
+        #      gripper_trajectory_controller
+        #    Action namespace:
+        #      follow_joint_trajectory
+        #    → nombre completo del action server:
+        #      /gripper_trajectory_controller/follow_joint_trajectory
+        self._gripper_action_server = ActionServer(
+            self,
+            FollowJointTrajectory,
+            "gripper_trajectory_controller/follow_joint_trajectory",
+            goal_callback=self.goal_callback,
+            cancel_callback=self.cancel_callback,
+            execute_callback=self.execute_callback,
         )
 
-    # ----------------------------------------------------------------------
-    # Callbacks del Action Server
-    # ----------------------------------------------------------------------
+        self.get_logger().info(
+            "Action servers FollowJointTrajectory listos en:\n"
+            "  - /joint_trajectory_controller/follow_joint_trajectory (brazo)\n"
+            "  - /gripper_trajectory_controller/follow_joint_trajectory (gripper)"
+        )
+
+    # ======================================================================
+    #   Callbacks del Action Server
+    # ======================================================================
+
     def goal_callback(self, goal_request: FollowJointTrajectory.Goal) -> GoalResponse:
         """
-        Se llama cuando llega un nuevo goal. Aquí comprobamos que las joints
-        que pide MoveIt son conocidas y que podemos controlarlas.
+        Se llama cuando llega un nuevo goal (tanto del brazo como del gripper).
+
+        Aquí validamos:
+          - que todas las joints de la trayectoria existen en joint_to_id,
+          - que haya al menos un punto en la trayectoria.
+
+        Si algo falla → GoalResponse.REJECT
+        Si todo está bien → GoalResponse.ACCEPT
         """
         traj = goal_request.trajectory
         unknown_joints = [
@@ -192,18 +243,26 @@ class PincherFollowJointTrajectory(Node):
 
     def cancel_callback(self, goal_handle) -> CancelResponse:
         """
-        Aquí podríamos implementar stop de emergencia. Por ahora solo aceptamos
-        la cancelación; el bucle de ejecución debe respetarlo y dejar de enviar
-        nuevos comandos si goal_handle.is_cancel_requested es True.
+        Se llama cuando el cliente (MoveIt u otro) solicita cancelar la trayectoria.
+
+        Aquí aceptamos la cancelación y el execute_callback debe comprobar
+        periódicamente goal_handle.is_cancel_requested para detener la ejecución.
         """
         self.get_logger().warn("Cancelación de trayectoria solicitada")
         return CancelResponse.ACCEPT
 
     def execute_callback(self, goal_handle):
         """
-        Ejecuta la trayectoria de joints punto a punto respetando los tiempos
-        time_from_start. Convierte radianes → ticks y manda GOAL_POSITION a
-        cada Dynamixel correspondiente.
+        Ejecuta la trayectoria punto a punto respetando los tiempos absolute:
+          - goal_handle.request.trajectory.time_from_start
+
+        Para cada punto:
+          1. Espera hasta el instante adecuado (relativo al inicio del goal).
+          2. Envía los comandos de posición a los servos correspondientes.
+          3. Actualiza current_positions para que /joint_states refleje el cambio.
+
+        Si se cancela el goal en mitad de la ejecución → marca el resultado
+        como PATH_TOLERANCE_VIOLATED (puedes ajustar si prefieres otro código).
         """
         traj = goal_handle.request.trajectory
         joint_names = traj.joint_names
@@ -213,6 +272,7 @@ class PincherFollowJointTrajectory(Node):
 
         # Recorremos cada punto de la trayectoria
         for i, point in enumerate(traj.points):
+            # Comprobar cancelación
             if goal_handle.is_cancel_requested:
                 self.get_logger().warn("Ejecución cancelada por el cliente")
                 goal_handle.canceled()
@@ -220,7 +280,7 @@ class PincherFollowJointTrajectory(Node):
                 result.error_code = FollowJointTrajectory.Result.PATH_TOLERANCE_VIOLATED
                 return result
 
-            # Calcular instante absoluto en el que se debe ejecutar este punto
+            # Instante absoluto en el que se debe ejecutar este punto
             t_point = point.time_from_start.sec + point.time_from_start.nanosec * 1e-9
             target_wall = start_wall + t_point
             now = time.time()
@@ -231,7 +291,7 @@ class PincherFollowJointTrajectory(Node):
             # Enviar posiciones para todas las joints de este punto
             self.send_point(joint_names, point)
 
-        # Si llegamos hasta aquí, consideramos la trayectoria ejecutada
+        # Si llegamos hasta aquí, consideramos que la trayectoria se completó bien
         self.get_logger().info("Trayectoria completada correctamente")
         goal_handle.succeed()
 
@@ -239,35 +299,49 @@ class PincherFollowJointTrajectory(Node):
         result.error_code = FollowJointTrajectory.Result.SUCCESSFUL
         return result
 
-    # ----------------------------------------------------------------------
-    # Publicación de /joint_states
-    # ----------------------------------------------------------------------
+    # ======================================================================
+    #   Publicación de /joint_states
+    # ======================================================================
+
     def publish_joint_states(self):
         """
-        Publica las posiciones COMANDADAS de las joints en /joint_states.
+        Publica periódicamente el estado COMANDADO de todas las joints
+        (brazo + gripper) en el tópico /joint_states.
 
-        Nota: por simplicidad usamos las posiciones que le hemos mandado
-        a los servos (modelo "open-loop"). Si más adelante lees feedback
-        real de los AX-12A, aquí podrías publicar las posiciones medidas.
+        NOTA:
+          - Por simplicidad, usamos las posiciones que nosotros mismos mandamos
+            a los servos (modelo "open-loop").
+          - Si más adelante lees la posición real con dynamixel_sdk, aquí
+            podrías publicar las posiciones reales en lugar de las comandadas.
         """
         msg = JointState()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.name = self.joint_names
-        msg.position = [self.current_positions[name] for name in self.joint_names]
+        msg.name = self.joint_state_names
+        msg.position = [self.current_positions[name] for name in self.joint_state_names]
 
         self.joint_state_pub.publish(msg)
 
-    # ----------------------------------------------------------------------
-    # Utilidades internas
-    # ----------------------------------------------------------------------
+    # ======================================================================
+    #   Utilidades internas: envío de puntos y conversión rad→tick
+    # ======================================================================
+
     def send_point(self, joint_names, point: JointTrajectoryPoint):
         """
-        Envía un JointTrajectoryPoint a los servos:
-          - joint_names define el orden
-          - point.positions está en radianes
+        Envía un único JointTrajectoryPoint a los servos.
 
-        Además actualiza self.current_positions para que /joint_states
+        Parámetros:
+          - joint_names: lista de nombres de joints en el orden de `point.positions`.
+          - point.positions: posiciones deseadas en radianes.
+
+        También actualiza self.current_positions para que /joint_states
         refleje las posiciones comandadas.
+
+        Caso particular del gripper:
+          - finger1 y finger2 se mapean al mismo servo (mismo ID).
+          - Para evitar mandar dos veces el mismo comando al mismo servo en el
+            mismo punto, guardamos qué IDs ya hemos comandado y solo escribimos
+            una vez en hardware (pero actualizamos las posiciones de las dos
+            joints en current_positions).
         """
         if len(point.positions) != len(joint_names):
             self.get_logger().error(
@@ -276,18 +350,33 @@ class PincherFollowJointTrajectory(Node):
             )
             return
 
+        # Lleva la cuenta de qué IDs ya han recibido comando en este punto
+        commanded_ids = set()
+
         for j_name, pos_rad in zip(joint_names, point.positions):
+            # Actualizar SIEMPRE la posición COMANDADA en current_positions
+            if j_name in self.current_positions:
+                self.current_positions[j_name] = pos_rad
+
+            # Si la joint no está en joint_to_id, no tenemos servo para ella
             if j_name not in self.joint_to_id:
                 self.get_logger().warn(
-                    f"Joint {j_name} no conocida, se ignora en este punto"
+                    f"Joint {j_name} no conocida en joint_to_id, se ignora en hardware"
                 )
                 continue
 
             dxl_id = self.joint_to_id[j_name]
+
+            # Evitar mandar dos veces al mismo servo (gripper finger1/finger2)
+            if dxl_id in commanded_ids:
+                continue
+            commanded_ids.add(dxl_id)
+
+            # Convertir radianes a ticks del AX-12A
             tick = self.rad_to_dxl_tick(pos_rad)
             tick_clamped = max(DXL_MIN_TICK, min(DXL_MAX_TICK, tick))
 
-            # Enviar comando de posición al servo
+            # Enviar comando de posición a ese servo
             _, err = self.packet.write2ByteTxRx(
                 self.port, dxl_id, ADDR_GOAL_POSITION, tick_clamped
             )
@@ -297,33 +386,39 @@ class PincherFollowJointTrajectory(Node):
                     f"err={err}"
                 )
 
-            # Actualizar posición comandada para /joint_states
-            self.current_positions[j_name] = pos_rad
-
     def rad_to_dxl_tick(self, rad: float) -> int:
         """
         Convierte un ángulo en radianes (modelo de MoveIt/URDF) a ticks
         del AX-12A (0–1023).
 
         Suposición inicial:
-          - 0 rad en URDF = servo centrado (~150°) = 512 ticks
-          - Rango útil ≈ ±150° → 0–300°
+          - 0 rad en el URDF ≈ centro mecánico del servo (~150°) ≈ 512 ticks.
+          - Rango total ≈ 300° → ±150° alrededor del centro.
 
-        Fórmula:
+        Fórmula usada:
           tick = 512 + deg * (1023 / 300)
+
+        Si al probar ves que el rango/dirección no coincide con lo que quieres
+        para el gripper, se puede ajustar esta función o aplicar un offset solo
+        para ese ID.
         """
         deg = math.degrees(rad)
         tick = 512.0 + deg * (1023.0 / 300.0)
         return int(round(tick))
 
+    # ======================================================================
+    #   Limpieza al destruir el nodo
+    # ======================================================================
+
     def destroy_node(self):
         """
-        Apaga torque y cierra el puerto al destruir el nodo.
+        Apaga el torque de todos los servos y cierra el puerto serie al
+        destruir el nodo. También destruye explícitamente los ActionServers.
         """
         self.get_logger().info("Apagando torque y cerrando puerto Dynamixel...")
         try:
             for j_name, dxl_id in self.joint_to_id.items():
-                self.packet.write1ByteTxRx(self.port, dxl_id, ADDR_TORQUE_ENABLE, 0)
+                self.packet.write1ByteTxRx(self.port, ADDR_TORQUE_ENABLE, 0)
         except Exception as e:
             self.get_logger().warn(f"Error al deshabilitar torque: {e}")
 
@@ -332,10 +427,21 @@ class PincherFollowJointTrajectory(Node):
         except Exception as e:
             self.get_logger().warn(f"Error al cerrar puerto: {e}")
 
+        # Destruir action servers explícitamente (buena práctica)
+        try:
+            self._arm_action_server.destroy()
+            self._gripper_action_server.destroy()
+        except Exception:
+            pass
+
         super().destroy_node()
 
 
 def main(args=None):
+    """
+    Punto de entrada del nodo. Inicializa rclpy, crea el nodo y lo mantiene
+    en ejecución hasta que se recibe Ctrl+C.
+    """
     rclpy.init(args=args)
     node = PincherFollowJointTrajectory()
     try:
