@@ -45,6 +45,12 @@
     <joint name="phantomx_pincher_arm_elbow_flex_joint" value="0.0"/>
     <joint name="phantomx_pincher_arm_wrist_flex_joint" value="1.5707963267948966"/>
   </group_state>
+  <group_state group="arm" name="overRightNearCan">
+    <joint name="phantomx_pincher_arm_shoulder_pan_joint" value="-1.5707963267948966"/>
+    <joint name="phantomx_pincher_arm_shoulder_lift_joint" value="0.3665191429188092"/>
+    <joint name="phantomx_pincher_arm_elbow_flex_joint" value="1.3962634015954636"/>
+    <joint name="phantomx_pincher_arm_wrist_flex_joint" value="1.3962634015954636"/>
+  </group_state>
   <group_state group="gripper" name="open">
     <joint name="phantomx_pincher_gripper_finger1_joint" value="0.0158"/>
     <joint name="phantomx_pincher_gripper_finger2_joint" value="0.0158"/>
@@ -361,4 +367,95 @@
     <disable_collisions link1="${prefix}task_board_link" link2="${prefix}task_board_mount_link"
       reason="Adjacent" />
     -->
+  <!-- ===================================================== -->
+  <!--  KIT PLATFORM COLLISION DISABLES (from kit.xacro)     -->
+  <!--  - Self-collisions between all kit links              -->
+  <!--  - Collisions between arm base and kit links          -->
+  <!-- ===================================================== -->
+  <!--
+      Kit links from kit.xacro:
+        baseFija_link
+        caseBaseRobot_link
+        zonaRecoleccion_link
+        airpump_link
+        manijaTrasera_link
+        manijaDelantera_link
+        canecaLateralIzquierda_link
+        canecaLateralDerecha_link
+        canecaFrontalDerecha_link
+        canecaFrontalIzquierda_link
+    -->
+  <!-- ============================== -->
+  <!-- A) KIT SELF-COLLISIONS (OFF)  -->
+  <!-- ============================== -->
+  <!-- baseFija_link vs others -->
+  <disable_collisions link1="baseFija_link" link2="caseBaseRobot_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="zonaRecoleccion_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="airpump_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="manijaTrasera_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="manijaDelantera_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="baseFija_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- caseBaseRobot_link vs others -->
+  <disable_collisions link1="caseBaseRobot_link" link2="zonaRecoleccion_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="airpump_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="manijaTrasera_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="manijaDelantera_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="caseBaseRobot_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- zonaRecoleccion_link vs others -->
+  <disable_collisions link1="zonaRecoleccion_link" link2="airpump_link" reason="Never"/>
+  <disable_collisions link1="zonaRecoleccion_link" link2="manijaTrasera_link" reason="Never"/>
+  <disable_collisions link1="zonaRecoleccion_link" link2="manijaDelantera_link" reason="Never"/>
+  <disable_collisions link1="zonaRecoleccion_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="zonaRecoleccion_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="zonaRecoleccion_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="zonaRecoleccion_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- airpump_link vs others -->
+  <disable_collisions link1="airpump_link" link2="manijaTrasera_link" reason="Never"/>
+  <disable_collisions link1="airpump_link" link2="manijaDelantera_link" reason="Never"/>
+  <disable_collisions link1="airpump_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="airpump_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="airpump_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="airpump_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- manijaTrasera_link vs others -->
+  <disable_collisions link1="manijaTrasera_link" link2="manijaDelantera_link" reason="Never"/>
+  <disable_collisions link1="manijaTrasera_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="manijaTrasera_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="manijaTrasera_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="manijaTrasera_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- manijaDelantera_link vs others -->
+  <disable_collisions link1="manijaDelantera_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="manijaDelantera_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="manijaDelantera_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="manijaDelantera_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- canecaLateralIzquierda_link vs others -->
+  <disable_collisions link1="canecaLateralIzquierda_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="canecaLateralIzquierda_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="canecaLateralIzquierda_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- canecaLateralDerecha_link vs others -->
+  <disable_collisions link1="canecaLateralDerecha_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="canecaLateralDerecha_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- canecaFrontalDerecha_link vs others -->
+  <disable_collisions link1="canecaFrontalDerecha_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- ================================================= -->
+  <!-- B) ARM BASE vs KIT COLLISIONS (OFF)              -->
+  <!--    Arm base link assumed to be ${prefix}arm_base_link -->
+  <!-- ================================================= -->
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="baseFija_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="caseBaseRobot_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="zonaRecoleccion_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="airpump_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="manijaTrasera_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="manijaDelantera_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="canecaLateralDerecha_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="canecaFrontalDerecha_link" reason="Never"/>
+  <disable_collisions link1="phantomx_pincher_arm_base_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+  <!-- Disable collision between shoulder pan servo and case base on the kit -->
+  <disable_collisions link1="phantomx_pincher_arm_shoulder_pan_servo_link" link2="caseBaseRobot_link" reason="Never"/>
 </robot>
