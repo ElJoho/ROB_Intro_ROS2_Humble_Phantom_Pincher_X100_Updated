@@ -133,9 +133,11 @@ def generate_launch_description():
     }
 
     # Kinematics
-    kinematics = load_yaml(
-        moveit_config_package, path.join("config", "kinematics.yaml")
-    )
+    kinematics = {
+        "robot_description_kinematics": load_yaml(
+            moveit_config_package, path.join("config", "kinematics.yaml")
+        )
+    }
 
     # Joint limits
     joint_limits = {

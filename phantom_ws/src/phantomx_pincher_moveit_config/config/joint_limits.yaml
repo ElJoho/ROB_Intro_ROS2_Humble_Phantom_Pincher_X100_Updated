@@ -31,10 +31,10 @@ joint_limits:
   phantomx_pincher_gripper_finger1_joint:
     has_velocity_limits: true
     max_velocity: 0.01
-    has_acceleration_limits: false
-    max_acceleration: 0.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0
   phantomx_pincher_gripper_finger2_joint:
     has_velocity_limits: true
     max_velocity: 0.01
-    has_acceleration_limits: false
-    max_acceleration: 0.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0
