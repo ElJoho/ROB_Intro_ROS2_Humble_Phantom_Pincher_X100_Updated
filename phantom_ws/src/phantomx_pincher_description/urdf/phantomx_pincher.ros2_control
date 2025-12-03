@@ -8,6 +8,9 @@
   <xacro:property name="default_initial_positions_file"
     value="$(find phantomx_pincher_description)/config/initial_joint_positions.yaml" />
 
+  <!-- Read ROS_DISTRO so we can pick fake vs mock plugin -->
+  <xacro:property name="ros_distro" value="$(env ROS_DISTRO)" />
+
 
   <!--       -->
   <!-- Macro -->
@@ -20,24 +23,48 @@
    command_interface:=position
    initial_positions_file:=${default_initial_positions_file}
   ">
-    <xacro:property name="initial_positions_arm" value="${xacro.load_yaml(initial_positions_file)['initial_joint_positions']['phantomx_pincher_arm']}" />
-    <xacro:property name="initial_positions_gripper" value="${xacro.load_yaml(initial_positions_file)['initial_joint_positions']['phantomx_pincher_gripper']}" />
+    <!-- Load initial joint positions from YAML -->
+    <xacro:property name="initial_positions_arm"
+      value="${xacro.load_yaml(initial_positions_file)['initial_joint_positions']['phantomx_pincher_arm']}" />
+    <xacro:property name="initial_positions_gripper"
+      value="${xacro.load_yaml(initial_positions_file)['initial_joint_positions']['phantomx_pincher_gripper']}" />
 
     <ros2_control name="${prefix}${name}" type="system">
       <hardware>
+        <!-- Distro-aware fake hardware plugin -->
         <xacro:if value="${plugin == 'fake'}">
-          <plugin>fake_components/GenericSystem</plugin>
+          <xacro:if value="${ros_distro == 'jazzy'}">
+            <plugin>mock_components/GenericSystem</plugin>
+          </xacro:if>
+          <xacro:unless value="${ros_distro == 'jazzy'}">
+            <plugin>fake_components/GenericSystem</plugin>
+          </xacro:unless>
+          <param name="fake_sensor_commands">true</param>
         </xacro:if>
+
         <xacro:if value="${plugin == 'ign'}">
           <plugin>ign_ros2_control/IgnitionSystem</plugin>
         </xacro:if>
+
         <xacro:if value="${plugin == 'real'}">
           <xacro:ERROR_ros2_control_for_real_robot_unimplemented />
         </xacro:if>
+
         <xacro:unless value="${plugin == 'fake' or plugin == 'ign' or plugin == 'real'}">
           <plugin>${plugin}</plugin>
         </xacro:unless>
       </hardware>
+
+      <!-- Use update_rate only on non-Jazzy distros (e.g. Humble) -->
+      <xacro:if value="${ros_distro != 'jazzy'}">
+        <xacro:if value="${plugin == 'fake'}">
+          <update_rate>250</update_rate>
+        </xacro:if>
+      </xacro:if>
+
+
+      <!-- ARM JOINTS -->
+
       <joint name="${prefix}arm_shoulder_pan_joint">
         <param name="initial_position">${initial_positions_arm['arm_shoulder_pan_joint']}</param>
         <xacro:if value="${'position' in command_interface}">
@@ -53,6 +80,7 @@
         <state_interface name="velocity" />
         <state_interface name="effort" />
       </joint>
+
       <joint name="${prefix}arm_shoulder_lift_joint">
         <param name="initial_position">${initial_positions_arm['arm_shoulder_lift_joint']}</param>
         <xacro:if value="${'position' in command_interface}">
@@ -68,6 +96,7 @@
         <state_interface name="velocity" />
         <state_interface name="effort" />
       </joint>
+
       <joint name="${prefix}arm_elbow_flex_joint">
         <param name="initial_position">${initial_positions_arm['arm_elbow_flex_joint']}</param>
         <xacro:if value="${'position' in command_interface}">
@@ -83,6 +112,7 @@
         <state_interface name="velocity" />
         <state_interface name="effort" />
       </joint>
+
       <joint name="${prefix}arm_wrist_flex_joint">
         <param name="initial_position">${initial_positions_arm['arm_wrist_flex_joint']}</param>
         <xacro:if value="${'position' in command_interface}">
@@ -99,6 +129,8 @@
         <state_interface name="effort" />
       </joint>
 
+      <!-- GRIPPER JOINTS -->
+
       <joint name="${prefix}gripper_finger1_joint">
         <param name="initial_position">${initial_positions_gripper['gripper_finger1_joint']}</param>
         <xacro:if value="${'position' in command_interface}">
@@ -114,6 +146,7 @@
         <state_interface name="velocity" />
         <state_interface name="effort" />
       </joint>
+
       <joint name="${prefix}gripper_finger2_joint">
         <param name="initial_position">${initial_positions_gripper['gripper_finger2_joint']}</param>
         <xacro:if value="${'position' in command_interface}">
@@ -129,6 +162,7 @@
         <state_interface name="velocity" />
         <state_interface name="effort" />
       </joint>
+
     </ros2_control>
   </xacro:macro>
 </robot>

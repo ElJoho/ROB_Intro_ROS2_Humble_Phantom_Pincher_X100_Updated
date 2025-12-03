@@ -107,6 +107,7 @@ def generate_launch_description():
             "enable_rviz": "true",
             # If your move_group.launch.py has this argument and you want Servo:
             # "enable_servo": "true",
+            "enable_servo": "false",
         }.items(),
     )
 
