@@ -51,6 +51,19 @@ def generate_launch_description():
         value_type=str,
     )
 
+    # Semantic robot description (SRDF → XML string)
+    # Use the pre-generated .srdf file instead of the .srdf.xacro
+    srdf_path = PathJoinSubstitution([
+        FindPackageShare("phantomx_pincher_moveit_config"),
+        "srdf",
+        "phantomx_pincher.srdf",  # NOTE: .srdf, NOT .srdf.xacro
+    ])
+
+    robot_description_semantic = ParameterValue(
+        Command(["cat ", srdf_path]),
+        value_type=str,
+    )
+
     # -------------------------------------------------------------------------
     #  Common nodes (both SIM and REAL)
     # -------------------------------------------------------------------------
@@ -70,8 +83,12 @@ def generate_launch_description():
     commander_node = Node(
         package="phantomx_pincher_commander_cpp",
         executable="commander",
-        name="commander",
+        #   name="commander",
         output="screen",
+        parameters=[{
+            "robot_description": robot_description,
+            "robot_description_semantic": robot_description_semantic,
+        }],
     )
 
     # -------------------------------------------------------------------------

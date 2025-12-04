@@ -220,10 +220,14 @@ def generate_launch_description():
     trajectory_execution = {
         "allow_trajectory_execution": True,
         "moveit_manage_controllers": False,
-        "trajectory_execution.allowed_execution_duration_scaling": 1.2,
-        "trajectory_execution.allowed_goal_duration_margin": 0.5,
+        # Allow much slower real hardware without timing out
+        "trajectory_execution.allowed_execution_duration_scaling": 3.0,
+        # Extra seconds after the estimate before MoveIt gives up
+        "trajectory_execution.allowed_goal_duration_margin": 5.0,
+        # Keep a tight start-tolerance for now; we’ll handle feedback in Step 3
         "trajectory_execution.allowed_start_tolerance": 0.01,
     }
+
 
     # Controller parameters
     declared_arguments.append(
