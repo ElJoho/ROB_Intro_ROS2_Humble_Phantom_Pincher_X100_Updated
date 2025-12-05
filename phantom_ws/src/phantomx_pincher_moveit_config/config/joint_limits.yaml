@@ -29,12 +29,26 @@ joint_limits:
     has_acceleration_limits: true
     max_acceleration: 1.5707963
   phantomx_pincher_gripper_finger1_joint:
+    has_position_limits: true
+    min_position: 0.0        # allow 0.0 as valid start
+    max_position: 0.0158     # keep URDF upper limit
     has_velocity_limits: true
     max_velocity: 0.01
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    has_acceleration_limits: false
+    max_acceleration: 0.0
+  #  has_velocity_limits: true
+  #  max_velocity: 0.01
+  #  has_acceleration_limits: true
+  #  max_acceleration: 1.0
   phantomx_pincher_gripper_finger2_joint:
+    has_position_limits: true
+    min_position: 0.0
+    max_position: 0.0158
     has_velocity_limits: true
     max_velocity: 0.01
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    has_acceleration_limits: false
+    max_acceleration: 0.0
+  #  has_velocity_limits: true
+  #  max_velocity: 0.01
+  #  has_acceleration_limits: true
+  #  max_acceleration: 1.0

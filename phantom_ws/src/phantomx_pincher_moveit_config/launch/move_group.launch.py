@@ -225,7 +225,7 @@ def generate_launch_description():
         # Extra seconds after the estimate before MoveIt gives up
         "trajectory_execution.allowed_goal_duration_margin": 5.0,
         # Keep a tight start-tolerance for now; we’ll handle feedback in Step 3
-        "trajectory_execution.allowed_start_tolerance": 0.01,
+        "trajectory_execution.allowed_start_tolerance": 0.1,
     }
 
 
