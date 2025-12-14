@@ -24,8 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'pxp_camera_publisher_node = ros2_opencv.cameraPublisher:main',
-            'pxp_camera_subscriber_node = ros2_opencv.subscriberImage:main',
+            'pxp_camera_publisher_node = phantomx_pincher_opencv.pxpCameraPublisher:main',
+            'pxp_camera_subscriber_node = phantomx_pincher_opencv.pxpCameraSubscriber:main',
         ],
     },
 )
