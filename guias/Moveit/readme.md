@@ -1,4 +1,44 @@
-# Guía 1 – Clasificación de objetos con PhantomX Pincher en ROS 2
+# PROYECTO Clasificación de objetos con PhantomX Pincher en ROS 2
+
+## RUBRICA
+
+
+### Tabla 1 — **Grupos que usan cámara**
+
+|  # | Sección          | Punto a calificar                                                                        | Evidencia/entregable esperado                                                                                                                                                            |
+| -: | ---------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1 | Parte 1          | Implementar las rutinas para cada una de las **4 figuras**                               | Rutina/nodo que clasifique **cubo, cilindro, pentágono y rectángulo** y los deposite en la caneca correcta (roja/verde/azul/amarilla), con secuencia completa de movimiento y agarre.    |
+|  2 | Parte 1          | Agregar **canastilla** y **soporte/mástil de cámara** en **Xacro** (visual + colisiones) | Modificar `kit.xacro` (ruta indicada) e incluir mástil y canastilla; asegurar `visual` y `collision` para ambos elementos.                                                               |
+|  3 | Parte 1          | Incluir un video del funcionamiento en **simulación**                                    | Video mostrando la rutina en simulación (según rúbrica).                                                                                                                                 |
+|  4 | Parte 1          | Incluir un video del funcionamiento con el **robot real** (YouTube + enlace en README)   | Video en YouTube y enlace visible en el `README` (según rúbrica).                                                                                                                        |
+|  5 | Parte 2 (Cámara) | Detectar las **4 figuras**                                                               | Evidencia de detección funcional para las 4 figuras (video/imagen + demostración en ejecución).                                                                                          |
+|  6 | Parte 2 (Cámara) | Mostrar y explicar los **paquetes** creados                                              | Lista de paquetes creados, propósito, nodos principales y cómo ejecutarlos.                                                                                                              |
+|  7 | Parte 2 (Cámara) | Explicar la **lógica del código** usada para detectar figuras                            | Explicación clara del pipeline (pasos, decisiones y validación del resultado).                                                                                                           |
+|  8 | Parte 2 (Cámara) | Mostrar **imágenes o video** de la detección                                             | Capturas o video donde se vea la detección (idealmente con resultado marcado/etiquetado).                                                                                                |
+|  9 | Parte 2 (Cámara) | Explicar la **conexión con la cámara** + dificultades + drivers/paquetes extra           | Qué cámara fue, cómo se conectó/configuró, problemas encontrados y solución (drivers/paquetes adicionales si aplicó).                                                                    |
+| 10 | Para todos       | Mostrar **diagrama de nodos** y la **comunicación** entre ellos                          | Diagrama tipo `rqt_graph` o equivalente, explicando tópicos/servicios/acciones y flujo de datos.                                                                                         |
+| 11 | Para todos       | Repositorio con el **workspace completo**                                                | Repositorio que incluya el workspace completo con todos los paquetes y scripts necesarios para ejecutar el proyecto.                                                                     |
+
+---
+
+### Tabla 2 — **Grupos que usan ventosa**
+
+|  # | Sección           | Punto a calificar                                                                        | Evidencia/entregable esperado                                                                                                                                                            |
+| -: | ----------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1 | Parte 1           | Implementar las rutinas para cada una de las **4 figuras**                               | Rutina/nodo que clasifique **cubo, cilindro, pentágono y rectángulo** y los deposite en la caneca correcta (roja/verde/azul/amarilla), con secuencia completa de movimiento y agarre.    |
+|  2 | Parte 1           | Agregar **canastilla** y **soporte/mástil de cámara** en **Xacro** (visual + colisiones) | Modificar `kit.xacro` (ruta indicada) e incluir mástil y canastilla; asegurar `visual` y `collision` para ambos elementos.                                                               |
+|  3 | Parte 1           | Incluir un video del funcionamiento en **simulación**                                    | Video mostrando la rutina en simulación (según rúbrica).                                                                                                                                 |
+|  4 | Parte 1           | Incluir un video del funcionamiento con el **robot real** (YouTube + enlace en README)   | Video en YouTube y enlace visible en el `README` (según rúbrica).                                                                                                                        |
+|  5 | Parte 2 (Ventosa) | Añadir la **ventosa** al Xacro                                                           | Xacro actualizado con la ventosa integrada (y sus elementos visuales/colisión si aplica).                                                                                                |
+|  6 | Parte 2 (Ventosa) | Mover el robot usando **teclas del teclado**                                             | Control por teclado demostrable (teleop o nodo propio) para mover el robot.                                                                                                              |
+|  7 | Parte 2 (Ventosa) | Activar la ventosa mediante una **tecla del teclado**                                    | Tecla para activar/desactivar la bomba/ventosa y evidencia de funcionamiento.                                                                                                            |
+|  8 | Parte 2 (Ventosa) | Mostrar el **circuito** utilizado para controlar la bomba                                | Foto/diagrama del circuito y explicación de cómo se controla desde el sistema.                                                                                                           |
+|  9 | Parte 2 (Ventosa) | Mostrar y explicar los **paquetes** creados                                              | Lista de paquetes creados, propósito, nodos principales y cómo ejecutarlos.                                                                                                              |
+| 10 | Para todos        | Mostrar **diagrama de nodos** y la **comunicación** entre ellos                          | Diagrama tipo `rqt_graph` o equivalente, explicando tópicos/servicios/acciones y flujo de datos.                                                                                         |
+| 11 | Para todos        | Repositorio con el **workspace completo**                                                | Repositorio que incluya el workspace completo con todos los paquetes y scripts necesarios para ejecutar el proyecto.                                                                     |
+
+
+# PARTE 1
 
 ## Objetivo
 
