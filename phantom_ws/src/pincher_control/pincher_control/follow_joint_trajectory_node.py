@@ -78,7 +78,7 @@ class PincherFollowJointTrajectory(Node):
         # Velocidad de movimiento (0–1023)
         self.declare_parameter("moving_speed", 200)
         # Límite de torque (0–1023)
-        self.declare_parameter("torque_limit", 400)
+        self.declare_parameter("torque_limit", 800)
         # ID del servo que mueve el gripper real
         self.declare_parameter("gripper_id", 5)
 

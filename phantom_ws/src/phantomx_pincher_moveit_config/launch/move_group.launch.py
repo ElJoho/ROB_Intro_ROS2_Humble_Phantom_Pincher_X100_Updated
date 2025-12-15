@@ -1,5 +1,4 @@
 #!/usr/bin/env -S ros2 launch
-"""Configure and setup move group for planning with MoveIt 2"""
 
 from os import path
 from typing import List
@@ -19,6 +18,7 @@ from launch.substitutions import (
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.parameter_descriptions import ParameterValue
+
 
 def generate_launch_description():
     # Declare all launch arguments
@@ -109,22 +109,21 @@ def generate_launch_description():
             "use_real_gripper:=",
             PythonExpression(
                 [
-                    "bool('",
+                    "'",
                     ros2_control,
-                    "') and ",
-                    "'",
+                    "' == 'true' and '",
                     ros2_control_plugin,
-                    "'",
-                    " == ",
-                    "'real'",
+                    "' == 'real'",
                 ]
             ),
+
         ]
     )
-    
-#    robot_description_semantic = {
-#        "robot_description_semantic": _robot_description_semantic_xml
-#    }
+
+    # If you ever want the “old style” back, this was it:
+    # robot_description_semantic = {
+    #     "robot_description_semantic": _robot_description_semantic_xml
+    # }
 
     robot_description_semantic = {
         "robot_description_semantic": ParameterValue(
@@ -133,11 +132,12 @@ def generate_launch_description():
         )
     }
 
-
     # Kinematics
-    kinematics = load_yaml(
-        moveit_config_package, path.join("config", "kinematics.yaml")
-    )
+    kinematics = {
+        "robot_description_kinematics": load_yaml(
+            moveit_config_package, path.join("config", "kinematics.yaml")
+        )
+    }
 
     # Joint limits
     joint_limits = {
@@ -152,19 +152,42 @@ def generate_launch_description():
             moveit_config_package, path.join("config", "servo.yaml")
         )
     }
+    # Re-using use_sim_time to tag whether we’re in Gazebo
     servo_params["moveit_servo"].update({"use_gazebo": use_sim_time})
 
     # Planning pipeline
     planning_pipeline = {
-        "planning_pipelines": ["ompl"],
+        # New-style planning pipeline parameters for MoveIt 2 Jazzy:
+        # planning_pipelines.pipeline_names -> ["ompl"]
+        # ompl.planning_plugins           -> ["ompl_interface/OMPLPlanner"]
+        "planning_pipelines": {
+            "pipeline_names": ["ompl"],
+            "namespace": "",
+        },
         "default_planning_pipeline": "ompl",
         "ompl": {
-            "planning_plugin": "ompl_interface/OMPLPlanner",
-            # TODO: Re-enable `default_planner_request_adapters/AddRuckigTrajectorySmoothing` once its issues are resolved
-            "request_adapters": "default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints",
+            # List of planner plugins (new API: planning_plugins)
+            "planning_plugins": ["ompl_interface/OMPLPlanner"],
+
+            # Pre-processing request adapters (run before planning, order matters)
+            "request_adapters": [
+                "default_planning_request_adapters/ResolveConstraintFrames",
+                "default_planning_request_adapters/ValidateWorkspaceBounds",
+                "default_planning_request_adapters/CheckStartStateBounds",
+                "default_planning_request_adapters/CheckStartStateCollision",
+            ],
+
+            # Post-processing response adapters (run after planning, order matters)
+            "response_adapters": [
+                "default_planning_response_adapters/AddTimeOptimalParameterization",
+                "default_planning_response_adapters/ValidateSolution",
+                "default_planning_response_adapters/DisplayMotionPath",
+            ],
+
             "start_state_max_bounds_error": 0.1,
         },
     }
+
     _ompl_yaml = load_yaml(
         moveit_config_package, path.join("config", "ompl_planning.yaml")
     )
@@ -176,20 +199,20 @@ def generate_launch_description():
         "publish_geometry_updates": True,
         "publish_state_updates": True,
         "publish_transforms_updates": True,
-        # NEW: publish robot description so external nodes (like commander)
-        # can construct their RobotModel via MoveGroupInterface
-        "publish_robot_description": True,
-        "publish_robot_description_semantic": True,
     }
 
     # MoveIt controller manager
     moveit_controller_manager_yaml = load_yaml(
         moveit_config_package,
         path.join("config", "moveit_controller_manager_gripper_trajectory.yaml"),
+        # If you want to use GripperCommand instead, swap configs:
         # path.join("config", "moveit_controller_manager_gripper_command.yaml"),
     )
     moveit_controller_manager = {
-        "moveit_controller_manager": "moveit_simple_controller_manager/MoveItSimpleControllerManager",
+        "moveit_controller_manager": (
+            "moveit_simple_controller_manager/"
+            "MoveItSimpleControllerManager"
+        ),
         "moveit_simple_controller_manager": moveit_controller_manager_yaml,
     }
 
@@ -197,10 +220,14 @@ def generate_launch_description():
     trajectory_execution = {
         "allow_trajectory_execution": True,
         "moveit_manage_controllers": False,
-        "trajectory_execution.allowed_execution_duration_scaling": 1.2,
-        "trajectory_execution.allowed_goal_duration_margin": 0.5,
-        "trajectory_execution.allowed_start_tolerance": 0.01,
+        # Allow much slower real hardware without timing out
+        "trajectory_execution.allowed_execution_duration_scaling": 3.0,
+        # Extra seconds after the estimate before MoveIt gives up
+        "trajectory_execution.allowed_goal_duration_margin": 5.0,
+        # Keep a tight start-tolerance for now; we’ll handle feedback in Step 3
+        "trajectory_execution.allowed_start_tolerance": 0.1,
     }
+
 
     # Controller parameters
     declared_arguments.append(
@@ -245,22 +272,18 @@ def generate_launch_description():
                 controller_parameters,
                 {"use_sim_time": use_sim_time},
             ],
-            condition=(
-                IfCondition(
-                    PythonExpression(
-                        [
-                            "bool('",
-                            ros2_control,
-                            "') and ",
-                            "'",
-                            ros2_control_plugin,
-                            "'",
-                            " == ",
-                            "'fake'",
-                        ]
-                    )
+            condition=IfCondition(
+                PythonExpression(
+                    [
+                        "'",
+                        ros2_control,
+                        "' == 'true' and '",
+                        ros2_control_plugin,
+                        "' == 'fake'",
+                    ]
                 )
             ),
+
         ),
         # move_group
         Node(
@@ -324,11 +347,11 @@ def generate_launch_description():
     ]
 
     # Add nodes for loading controllers
-    for controller in moveit_controller_manager_yaml["controller_names"] + [
-        "joint_state_broadcaster"
-    ]:
+    # NOTE: joint_state_broadcaster is already started by ros2_control_node
+    # from controllers_position.yaml, so we do NOT spawn it here to avoid
+    # "can not be configured from 'active' state" errors.
+    for controller in moveit_controller_manager_yaml["controller_names"]:
         nodes.append(
-            # controller_manager_spawner
             Node(
                 package="controller_manager",
                 executable="spawner",
@@ -346,7 +369,6 @@ def load_yaml(package_name: str, file_path: str):
     """
     Load yaml configuration based on package name and file path relative to its share.
     """
-
     package_path = get_package_share_directory(package_name)
     absolute_file_path = path.join(package_path, file_path)
     return parse_yaml(absolute_file_path)
@@ -356,7 +378,6 @@ def parse_yaml(absolute_file_path: str):
     """
     Parse yaml from file, given its absolute file path.
     """
-
     try:
         with open(absolute_file_path, "r") as file:
             return yaml.safe_load(file)
@@ -379,7 +400,10 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             "description_filepath",
             default_value=path.join("urdf", "phantomx_pincher.urdf.xacro"),
-            description="Path to xacro or URDF description of the robot, relative to share of `description_package`.",
+            description=(
+                "Path to xacro or URDF description of the robot, "
+                "relative to share of `description_package`."
+            ),
         ),
         # Naming of the robot
         DeclareLaunchArgument(
@@ -390,7 +414,10 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             "prefix",
             default_value="phantomx_pincher_",
-            description="Prefix for all robot entities. If modified, then joint names in the configuration of controllers must also be updated.",
+            description=(
+                "Prefix for all robot entities. If modified, then all frame and "
+                "joint names in the configuration of controllers must also be updated."
+            ),
         ),
         # Collision geometry
         DeclareLaunchArgument(
@@ -407,12 +434,19 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             "ros2_control_plugin",
             default_value="fake",
-            description="The ros2_control plugin that should be loaded for the manipulator ('fake', 'ign', 'real' or custom).",
+            description=(
+                "The ros2_control plugin that should be loaded for the manipulator "
+                "('fake', 'ign', 'real' or custom)."
+            ),
         ),
         DeclareLaunchArgument(
             "ros2_control_command_interface",
             default_value="position",
-            description="The output control command interface provided by ros2_control ('position', 'velocity', 'effort' or certain combinations 'position,velocity').",
+            description=(
+                "The output control command interface provided by ros2_control "
+                "(e.g. 'position', 'velocity', 'effort' or combinations "
+                "like 'position,velocity')."
+            ),
         ),
         # Gripper
         DeclareLaunchArgument(
@@ -424,7 +458,10 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             "gazebo_preserve_fixed_joint",
             default_value="false",
-            description="Flag to preserve fixed joints and prevent lumping when generating SDF for Gazebo.",
+            description=(
+                "Flag to preserve fixed joints and prevent lumping when generating "
+                "SDF for Gazebo."
+            ),
         ),
         # Controller management
         DeclareLaunchArgument(
@@ -440,7 +477,9 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         ),
         # Miscellaneous
         DeclareLaunchArgument(
-            "enable_rviz", default_value="true", description="Flag to enable RViz2."
+            "enable_rviz",
+            default_value="true",
+            description="Flag to enable RViz2.",
         ),
         DeclareLaunchArgument(
             "rviz_config",
@@ -459,6 +498,9 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             "log_level",
             default_value="warn",
-            description="The level of logging that is applied to all ROS 2 nodes launched by this script.",
+            description=(
+                "The level of logging that is applied to all ROS 2 nodes "
+                "launched by this script."
+            ),
         ),
     ]

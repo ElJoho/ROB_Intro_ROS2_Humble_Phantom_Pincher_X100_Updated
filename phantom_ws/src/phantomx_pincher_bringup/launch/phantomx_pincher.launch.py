@@ -51,6 +51,19 @@ def generate_launch_description():
         value_type=str,
     )
 
+    # Semantic robot description (SRDF → XML string)
+    # Use the pre-generated .srdf file instead of the .srdf.xacro
+    srdf_path = PathJoinSubstitution([
+        FindPackageShare("phantomx_pincher_moveit_config"),
+        "srdf",
+        "phantomx_pincher.srdf",  # NOTE: .srdf, NOT .srdf.xacro
+    ])
+
+    robot_description_semantic = ParameterValue(
+        Command(["cat ", srdf_path]),
+        value_type=str,
+    )
+
     # -------------------------------------------------------------------------
     #  Common nodes (both SIM and REAL)
     # -------------------------------------------------------------------------
@@ -70,8 +83,12 @@ def generate_launch_description():
     commander_node = Node(
         package="phantomx_pincher_commander_cpp",
         executable="commander",
-        name="commander",
+        #   name="commander",
         output="screen",
+        parameters=[{
+            "robot_description": robot_description,
+            "robot_description_semantic": robot_description_semantic,
+        }],
     )
 
     # -------------------------------------------------------------------------
@@ -122,16 +139,20 @@ def generate_launch_description():
         condition=UnlessCondition(use_real_robot),
     )
 
+    # MoveIt for SIM: use external ros2_control (this file), so we disable
+    # the internal fake ros2_control_node in move_group.launch.py
     move_group_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([move_group_launch_path]),
         launch_arguments={
-            # Empty string → bool('') == False inside move_group.launch.py
-            # so it will NOT start its own ros2_control_node
+            # Empty string → bool('') == False inside move_group.launch.py,
+            # so it will NOT start its internal ros2_control_node.
             "ros2_control": "",
             # We already manage controllers in this launch file
             "manage_controllers": "false",
             # We want MoveIt RViz
             "enable_rviz": "true",
+            # Optional: keep Servo disabled by default
+            "enable_servo": "false",
         }.items(),
         condition=UnlessCondition(use_real_robot),
     )
@@ -145,28 +166,22 @@ def generate_launch_description():
         executable="follow_joint_trajectory",
         name="pincher_follow_joint_trajectory",
         output="screen",
-        # Optional: override defaults if needed
-        # parameters=[{
-        #     "port": "/dev/ttyUSB0",
-        #     "baudrate": 1000000,
-        #     "joint_prefix": "phantomx_pincher_",
-        #     "moving_speed": 200,
-        #     "torque_limit": 400,
-        #     "gripper_id": 5,
-        # }],
         condition=IfCondition(use_real_robot),
     )
 
+    # MoveIt for REAL: no ros2_control, just connect to pincher_control
     move_group_real = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([move_group_launch_path]),
         launch_arguments={
             # Do NOT let MoveIt start ros2_control
             "ros2_control": "false",
-            # Matches the mode you used manually with move_group.launch.py
+            # Matches the mode you use with move_group.launch.py for real HW
             "ros2_control_plugin": "real",
             # pincher_control provides the action servers, so MoveIt won't spawn controllers
             "manage_controllers": "false",
             "enable_rviz": "true",
+            # Optional: keep Servo disabled by default
+            "enable_servo": "false",
         }.items(),
         condition=IfCondition(use_real_robot),
     )

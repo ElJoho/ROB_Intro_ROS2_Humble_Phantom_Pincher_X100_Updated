@@ -189,7 +189,14 @@ sudo apt-get install libserial-dev
 
 ---
 
-## 5. 📌 Referencia de “¿Qué hace cada línea?” (resumen rápido)
+## 5 Instalar Kamoso (para ver video)
+
+```bash
+sudo apt update
+sudo apt install kamoso
+```
+
+## 6. 📌 Referencia de “¿Qué hace cada línea?” (resumen rápido)
 
 - `sudo apt-get update && sudo apt-get upgrade`: sincroniza índices e instala actualizaciones.
 - `sudo apt-get install terminator`: emulador de terminal con paneles múltiples.

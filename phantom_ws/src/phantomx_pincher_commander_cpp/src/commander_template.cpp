@@ -28,6 +28,10 @@ public:
         arm_ = std::make_shared<MoveGroupInterface>(node_, "arm");
         arm_->setMaxVelocityScalingFactor(1.0);
         arm_->setMaxAccelerationScalingFactor(1.0);
+        arm_->setGoalPositionTolerance(0.01);      // 2 mm
+        arm_->setGoalOrientationTolerance(0.1);    // ~3 degrees
+        arm_->setPlanningTime(5.0);                 // more chance to find IK
+
         gripper_ = std::make_shared<MoveGroupInterface>(node_, "gripper");
 
         RCLCPP_INFO(
