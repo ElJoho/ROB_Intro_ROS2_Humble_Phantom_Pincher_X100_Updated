@@ -158,7 +158,7 @@ arm:
     - SPARS
     - SPARStwo
     - TrajOpt
-  longest_valid_segment_fraction: 0.025
+  longest_valid_segment_fraction: 0.1
 gripper:
   default_planner_config: RRTConnect
   planner_configs:
