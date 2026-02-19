@@ -11,8 +11,9 @@
 #   - Envía un goal FollowJointTrajectory al action server correspondiente.
 #   - Este nodo convierte las posiciones (radianes) a ticks del AX-12A y
 #     envía los comandos de posición a los servos reales.
-#   - Además publica /joint_states con las posiciones COMANDADAS para que
-#     robot_state_publisher y MoveIt conozcan el estado actual del robot.
+#   - Además publica /joint_states con las posiciones REALES leídas de los
+#     servos (closed-loop) para que robot_state_publisher y MoveIt conozcan
+#     el estado actual del robot y RViz lo visualice en tiempo real.
 #
 # NOTA:
 #   El gripper real se mueve con UN solo motor. En el URDF/SRDF hay dos joints
@@ -25,10 +26,13 @@
 
 import math
 import time
+import threading
 
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionServer, GoalResponse, CancelResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
@@ -41,6 +45,7 @@ ADDR_TORQUE_ENABLE    = 24
 ADDR_GOAL_POSITION    = 30
 ADDR_MOVING_SPEED     = 32
 ADDR_TORQUE_LIMIT     = 34
+ADDR_PRESENT_POSITION = 36  # Para leer la posición actual del servo
 
 # Rango básico de ticks en AX-12A (0–1023)
 DXL_MIN_TICK = 0
@@ -61,12 +66,20 @@ class PincherFollowJointTrajectory(Node):
         time_from_start y manda las posiciones a los servos Dynamixel.
 
     Además:
-      - Publica /joint_states con las posiciones COMANDADAS (brazo + gripper).
+      - Publica /joint_states con las posiciones REALES leídas de los servos
+        (closed-loop feedback) para que RViz muestre el robot en tiempo real.
       - Convierte radianes del modelo de MoveIt a ticks (0–1023) de los AX-12A.
     """
 
     def __init__(self):
         super().__init__("pincher_follow_joint_trajectory")
+
+        # Callback group para permitir que el timer de joint_states se ejecute
+        # concurrentemente con los action servers (durante execute_callback)
+        self._timer_callback_group = ReentrantCallbackGroup()
+
+        # Lock para proteger el acceso al puerto serie desde múltiples hilos
+        self._serial_lock = threading.Lock()
 
         # -------------- Parámetros configurables del nodo --------------
         # Puerto serie donde está conectado el adaptador (U2D2, etc.)
@@ -116,22 +129,42 @@ class PincherFollowJointTrajectory(Node):
             f"{prefix}gripper_finger1_joint":    gripper_id,
             f"{prefix}gripper_finger2_joint":    gripper_id,
         }
-        # Mismo convenio de signos que en control_servo.py:
-        #   ID 1:  +1  (shoulder pan)
-        #   ID 2:  -1  (shoulder lift)
-        #   ID 3:  -1  (elbow flex)
-        #   ID 4:  -1  (wrist flex)
-        #   ID 5:  +1  (gripper)  → en nuestro caso gripper_id
-        self.joint_sign = {
-            1:  1,
-            2: -1,
-            3: -1,
-            4: -1,
-            gripper_id: 1,
+        # Orientación física de cada servo respecto al eje del URDF/MoveIt.
+        #
+        # El AX-12A incrementa sus ticks en sentido antihorario visto desde el
+        # frente del servo. Si ese sentido físico coincide con el sentido
+        # positivo de la articulación en el URDF, el signo es +1. Si están
+        # invertidos (el servo gira en sentido contrario al eje URDF), el
+        # signo es -1.
+        #
+        # ESTE ES EL ÚNICO LUGAR donde se deben ajustar los signos. Modificar
+        # un valor aquí actualiza automáticamente tanto el envío de comandos
+        # como la lectura de posiciones, garantizando que ambas operaciones
+        # sean siempre consistentes entre sí.
+        servo_axis_sign = {
+            1: -1,   # shoulder_pan:  eje del servo invertido respecto al URDF
+            2:  1,   # shoulder_lift: eje del servo coincide con el URDF
+            3:  1,   # elbow_flex:    eje del servo coincide con el URDF
+            4:  1,   # wrist_flex:    eje del servo coincide con el URDF
+            gripper_id:  1,  # gripper: eje del servo coincide con el URDF
         }
 
+        # Signos derivados de servo_axis_sign.
+        #
+        # Se construyen a partir de la misma fuente para que send y read sean
+        # siempre idénticos. Con sign_send == sign_read se cumple:
+        #
+        #   sign_send * sign_read = +1
+        #
+        # lo que garantiza que una posición comandada X se leerá de vuelta
+        # como X (sin inversión). Nunca modifiques estos diccionarios
+        # directamente; edita servo_axis_sign arriba.
+        self.joint_sign_send = dict(servo_axis_sign)  # convierte rad URDF → tick hardware
+        self.joint_sign_read = dict(servo_axis_sign)  # convierte tick hardware → rad URDF
+
         self.get_logger().info(f"Mapa joint→ID: {self.joint_to_id}")
-        self.get_logger().info(f"Signos por ID: {self.joint_sign}")
+        self.get_logger().info(f"Signos envío: {self.joint_sign_send}")
+        self.get_logger().info(f"Signos lectura: {self.joint_sign_read}")
 
         # Lista de joints para /joint_states:
         #   - Todas las actuadas (keys de joint_to_id).
@@ -142,13 +175,20 @@ class PincherFollowJointTrajectory(Node):
             f"{prefix}gripper_joint",
         ]
 
-        # Estado actual COMANDADO (en radianes) de cada joint.
-        # Inicialmente asumimos 0.0 rad.
+        # Estado actual (en radianes) de cada joint.
+        # Se inicializa a 0.0 pero se actualizará con las posiciones reales
+        # después de conectar con los servos Dynamixel.
         self.current_positions = {name: 0.0 for name in self.joint_state_names}
 
         # Publisher de /joint_states + timer periódico (50 Hz)
+        # Usa un callback group separado para que pueda ejecutarse durante
+        # la ejecución de trayectorias (cuando execute_callback está bloqueado)
         self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
-        self.joint_state_timer = self.create_timer(0.02, self.publish_joint_states)
+        self.joint_state_timer = self.create_timer(
+            0.02,
+            self.publish_joint_states,
+            callback_group=self._timer_callback_group
+        )
 
         # -------------- Inicialización de comunicación Dynamixel --------------
         # Abre el puerto serie y configura el baudrate.
@@ -178,6 +218,13 @@ class PincherFollowJointTrajectory(Node):
         self.get_logger().info(
             f"Conectado a Dynamixel en {port_name} @ {baudrate} baud. "
             f"Velocidad={moving_speed}, Torque limit={torque_limit}, gripper_id={gripper_id}"
+        )
+
+        # Leer las posiciones reales de los servos al iniciar para que RViz
+        # muestre la posición actual del robot desde el principio
+        self.read_servo_positions()
+        self.get_logger().info(
+            f"Posiciones iniciales leídas del hardware: {self.current_positions}"
         )
 
         # -------------- Action Servers FollowJointTrajectory --------------
@@ -319,15 +366,16 @@ class PincherFollowJointTrajectory(Node):
 
     def publish_joint_states(self):
         """
-        Publica periódicamente el estado COMANDADO de todas las joints
+        Publica periódicamente el estado REAL de todas las joints
         (brazo + gripper) en el tópico /joint_states.
 
-        NOTA:
-          - Por simplicidad, usamos las posiciones que nosotros mismos mandamos
-            a los servos (modelo "open-loop").
-          - Si más adelante lees la posición real con dynamixel_sdk, aquí
-            podrías publicar las posiciones reales en lugar de las comandadas.
+        Lee las posiciones actuales de los servos Dynamixel para proporcionar
+        feedback en closed-loop, permitiendo que RViz muestre la posición
+        real del robot en tiempo real.
         """
+        # Leer las posiciones reales de los servos antes de publicar
+        self.read_servo_positions()
+
         msg = JointState()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.name = self.joint_state_names
@@ -347,15 +395,13 @@ class PincherFollowJointTrajectory(Node):
           - joint_names: lista de nombres de joints en el orden de `point.positions`.
           - point.positions: posiciones deseadas en radianes.
 
-        También actualiza self.current_positions para que /joint_states
-        refleje las posiciones comandadas.
-
         Caso particular del gripper:
           - finger1 y finger2 se mapean al mismo servo (mismo ID).
           - Para evitar mandar dos veces el mismo comando al mismo servo en el
             mismo punto, guardamos qué IDs ya hemos comandado y solo escribimos
-            una vez en hardware (pero actualizamos las posiciones de las dos
-            joints en current_positions).
+            una vez en hardware.
+
+        Thread-safe: usa un lock para proteger el acceso al puerto serie.
         """
         if len(point.positions) != len(joint_names):
             self.get_logger().error(
@@ -367,12 +413,10 @@ class PincherFollowJointTrajectory(Node):
         # Lleva la cuenta de qué IDs ya han recibido comando en este punto
         commanded_ids = set()
 
-        for j_name, pos_rad in zip(joint_names, point.positions):
-            # Actualizar SIEMPRE la posición COMANDADA en current_positions
-            # (en el sistema de coordenadas del URDF/MoveIt)
-            if j_name in self.current_positions:
-                self.current_positions[j_name] = pos_rad
+        # Preparar los comandos antes de adquirir el lock
+        commands_to_send = []
 
+        for j_name, pos_rad in zip(joint_names, point.positions):
             # Si la joint no está en joint_to_id, no tenemos servo para ella
             if j_name not in self.joint_to_id:
                 self.get_logger().warn(
@@ -387,27 +431,28 @@ class PincherFollowJointTrajectory(Node):
                 continue
             commanded_ids.add(dxl_id)
 
-            # 🔴 AQUÍ estaba el problema:
-            # Usábamos pos_rad directamente, sin aplicar el signo de ese servo.
-            #
             # Aplicar el signo para que el sentido físico del servo coincida
             # con el sentido de la articulación en el URDF/MoveIt.
-            sign = self.joint_sign.get(dxl_id, 1)
+            sign = self.joint_sign_send.get(dxl_id, 1)
             hw_rad = pos_rad * sign
 
             # Convertir radianes (lado hardware) a ticks del AX-12A
             tick = self.rad_to_dxl_tick(hw_rad)
             tick_clamped = max(DXL_MIN_TICK, min(DXL_MAX_TICK, tick))
 
-            # Enviar comando de posición a ese servo
-            _, err = self.packet.write2ByteTxRx(
-                self.port, dxl_id, ADDR_GOAL_POSITION, tick_clamped
-            )
-            if err != 0:
-                self.get_logger().warn(
-                    f"Error al mandar posición a ID {dxl_id}: tick={tick_clamped}, "
-                    f"err={err}"
+            commands_to_send.append((dxl_id, tick_clamped))
+
+        # Enviar todos los comandos con el lock adquirido
+        with self._serial_lock:
+            for dxl_id, tick_clamped in commands_to_send:
+                _, err = self.packet.write2ByteTxRx(
+                    self.port, dxl_id, ADDR_GOAL_POSITION, tick_clamped
                 )
+                if err != 0:
+                    self.get_logger().warn(
+                        f"Error al mandar posición a ID {dxl_id}: tick={tick_clamped}, "
+                        f"err={err}"
+                    )
 
     def rad_to_dxl_tick(self, rad: float) -> int:
         """
@@ -429,6 +474,72 @@ class PincherFollowJointTrajectory(Node):
         tick = 512.0 + deg * (1023.0 / 300.0)
         return int(round(tick))
 
+    def dxl_tick_to_rad(self, tick: int) -> float:
+        """
+        Convierte ticks del AX-12A (0–1023) a radianes.
+
+        Fórmula inversa de rad_to_dxl_tick:
+          deg = (tick - 512) * (300 / 1023)
+          rad = deg * (pi / 180)
+        """
+        deg = (tick - 512.0) * (300.0 / 1023.0)
+        return math.radians(deg)
+
+    def read_servo_positions(self):
+        """
+        Lee las posiciones actuales de todos los servos desde el hardware
+        y actualiza self.current_positions con los valores reales.
+
+        Esto permite que RViz muestre la posición real del robot en lugar
+        de las posiciones comandadas (closed-loop feedback).
+
+        Thread-safe: usa un lock para proteger el acceso al puerto serie.
+        """
+        # Conjuntos para evitar leer el mismo servo más de una vez
+        read_ids = set()
+
+        with self._serial_lock:
+            for j_name, dxl_id in self.joint_to_id.items():
+                if dxl_id in read_ids:
+                    # Ya leímos este servo (ej: gripper finger1 y finger2 son el mismo)
+                    # Copiar el valor ya leído
+                    for other_name, other_id in self.joint_to_id.items():
+                        if other_id == dxl_id and other_name in self.current_positions:
+                            self.current_positions[j_name] = self.current_positions[other_name]
+                            break
+                    continue
+
+                read_ids.add(dxl_id)
+
+                # Leer la posición actual del servo
+                tick, comm_result, err = self.packet.read2ByteTxRx(
+                    self.port, dxl_id, ADDR_PRESENT_POSITION
+                )
+
+                if comm_result != 0 or err != 0:
+                    self.get_logger().warn(
+                        f"Error leyendo posición de servo ID {dxl_id}: "
+                        f"comm_result={comm_result}, err={err}"
+                    )
+                    continue
+
+                # Convertir tick a radianes (lado hardware)
+                hw_rad = self.dxl_tick_to_rad(tick)
+
+                # Aplicar el signo para obtener radianes del URDF/MoveIt
+                sign = self.joint_sign_read.get(dxl_id, 1)
+                urdf_rad = hw_rad * sign
+
+                # Actualizar la posición de esta joint
+                self.current_positions[j_name] = urdf_rad
+
+        # Actualizar la joint pasiva del gripper (gripper_joint)
+        # basándose en finger1 (o usar 0 si no existe)
+        gripper_finger1 = f"{self.prefix}gripper_finger1_joint"
+        gripper_passive = f"{self.prefix}gripper_joint"
+        if gripper_finger1 in self.current_positions and gripper_passive in self.current_positions:
+            self.current_positions[gripper_passive] = self.current_positions[gripper_finger1]
+
     # ======================================================================
     #   Limpieza al destruir el nodo
     # ======================================================================
@@ -441,7 +552,7 @@ class PincherFollowJointTrajectory(Node):
         self.get_logger().info("Apagando torque y cerrando puerto Dynamixel...")
         try:
             for j_name, dxl_id in self.joint_to_id.items():
-                self.packet.write1ByteTxRx(self.port, ADDR_TORQUE_ENABLE, 0)
+                self.packet.write1ByteTxRx(self.port, dxl_id, ADDR_TORQUE_ENABLE, 0)
         except Exception as e:
             self.get_logger().warn(f"Error al deshabilitar torque: {e}")
 
@@ -464,14 +575,26 @@ def main(args=None):
     """
     Punto de entrada del nodo. Inicializa rclpy, crea el nodo y lo mantiene
     en ejecución hasta que se recibe Ctrl+C.
+
+    Usa MultiThreadedExecutor para permitir que el timer de joint_states
+    se ejecute concurrentemente con los action servers, así RViz puede
+    mostrar la posición del robot en tiempo real durante la ejecución
+    de trayectorias.
     """
     rclpy.init(args=args)
     node = PincherFollowJointTrajectory()
+
+    # Usar MultiThreadedExecutor para que el timer pueda ejecutarse
+    # mientras el action server está procesando una trayectoria
+    executor = MultiThreadedExecutor(num_threads=4)
+    executor.add_node(node)
+
     try:
-        rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
+        executor.shutdown()
         node.destroy_node()
         rclpy.shutdown()
 

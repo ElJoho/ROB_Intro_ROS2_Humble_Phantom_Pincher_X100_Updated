@@ -5,11 +5,11 @@
         <pose>-0.013029600000000001 -7.3845399999630895e-07 0.070422613999999994 0 0 0</pose>
         <mass>0.081398024006542419</mass>
         <inertia>
-          <ixx>1.257698644592541e-05</ixx>
-          <ixy>-2.4208698077442311e-10</ixy>
-          <ixz>3.50411042194539e-07</ixz>
-          <iyy>2.3143627968296011e-05</iyy>
-          <iyz>-6.9048755167865036e-10</iyz>
+          <ixx>1.2576986445925389e-05</ixx>
+          <ixy>-2.4208698077442332e-10</ixy>
+          <ixz>3.504110421945444e-07</ixz>
+          <iyy>2.3143627968296e-05</iyy>
+          <iyz>-6.9048755167865005e-10</iyz>
           <izz>1.993603120968358e-05</izz>
         </inertia>
       </inertial>
@@ -66,7 +66,7 @@
         </geometry>
       </collision>
       <collision name='phantomx_pincher_base_link_fixed_joint_lump__caseBaseRobot_link_collision_6'>
-        <pose>-0.01325 0 0.029999999999999999 3.1415926535897931 0 1.5707963267948959</pose>
+        <pose>-0.01325 0 0.029999999999999999 3.1415926535897931 1.0033023363942468e-32 1.5707963267948959</pose>
         <geometry>
           <box>
             <size>0.066000000000000003 0.073999999999999996 0.048000000000000001</size>
@@ -196,7 +196,7 @@
         </material>
       </visual>
       <visual name='phantomx_pincher_base_link_fixed_joint_lump__caseBaseRobot_link_visual_6'>
-        <pose>-0.01325 0 0.053999999999999999 3.1415926535897931 0 1.5707963267948959</pose>
+        <pose>-0.01325 0 0.053999999999999999 3.1415926535897931 1.0033023363942468e-32 1.5707963267948959</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -258,7 +258,7 @@
       </visual>
     </link>
     <joint name='phantomx_pincher_arm_shoulder_pan_joint' type='revolute'>
-      <pose relative_to='phantomx_pincher_base_link'>-3.4694469519536142e-18 0 0.088999999999999996 -3.1415926535897931 2.2204460492503121e-16 -3.1415926535897931</pose>
+      <pose relative_to='phantomx_pincher_base_link'>-3.4694469519536142e-18 0 0.088999999999999996 -3.1415926535897931 2.2204460492503131e-16 3.1415926535897931</pose>
       <parent>phantomx_pincher_base_link</parent>
       <child>phantomx_pincher_arm_shoulder_pan_link</child>
       <axis>
@@ -293,9 +293,9 @@
         <inertia>
           <ixx>2.633487857526346e-05</ixx>
           <ixy>6.8175816151448447e-10</ixy>
-          <ixz>-2.069705364080512e-10</ixz>
-          <iyy>2.2601091776010151e-05</iyy>
-          <iyz>-3.0157456879133362e-07</iyz>
+          <ixz>-2.0697053640805149e-10</ixz>
+          <iyy>2.2601091776010141e-05</iyy>
+          <iyz>-3.0157456879133351e-07</iyz>
           <izz>1.3864477057815019e-05</izz>
         </inertia>
       </inertial>
@@ -390,11 +390,11 @@
         <pose>-0.00012137735590647781 0.00028588685705100851 0.07133476832835256 0 0 0</pose>
         <mass>0.1235269029539826</mass>
         <inertia>
-          <ixx>0.00011126590019944989</ixx>
+          <ixx>0.0001112659001994498</ixx>
           <ixy>-3.4505658476539801e-09</ixy>
-          <ixz>4.0295345044288871e-07</ixz>
-          <iyy>9.9172419902998133e-05</iyy>
-          <iyz>-1.483690008628516e-07</iyz>
+          <ixz>4.0295345044288882e-07</ixz>
+          <iyy>9.9172419902997971e-05</iyy>
+          <iyz>-1.4836900086285171e-07</iyz>
           <izz>2.7139002304225952e-05</izz>
         </inertia>
       </inertial>
@@ -601,11 +601,11 @@
         <pose>-0.00012137735590647781 0.00028588685705100851 0.07133476832835256 0 0 0</pose>
         <mass>0.1235269029539826</mass>
         <inertia>
-          <ixx>0.00011126590019944989</ixx>
+          <ixx>0.0001112659001994498</ixx>
           <ixy>-3.4505658476539801e-09</ixy>
-          <ixz>4.0295345044288871e-07</ixz>
-          <iyy>9.9172419902998133e-05</iyy>
-          <iyz>-1.483690008628516e-07</iyz>
+          <ixz>4.0295345044288882e-07</ixz>
+          <iyy>9.9172419902997971e-05</iyy>
+          <iyz>-1.4836900086285171e-07</iyz>
           <izz>2.7139002304225952e-05</izz>
         </inertia>
       </inertial>
@@ -809,14 +809,14 @@
     <link name='phantomx_pincher_arm_wrist_flex_link'>
       <pose relative_to='phantomx_pincher_arm_wrist_flex_joint'>0 0 0 0 0 0</pose>
       <inertial>
-        <pose>-0.0092959573973335659 -5.4518848508553946e-07 0.043026248552243178 0 0 0</pose>
+        <pose>-0.0092959573973335659 -5.4518848508993217e-07 0.043026248552243178 0 0 0</pose>
         <mass>0.11408917431946421</mass>
         <inertia>
-          <ixx>4.3988924081828188e-05</ixx>
-          <ixy>-4.4638748338369969e-10</ixy>
-          <ixz>3.4227778571969781e-06</ixz>
-          <iyy>5.0046434742980048e-05</iyy>
-          <iyz>-5.4239454493520664e-10</iyz>
+          <ixx>4.3988924081828201e-05</ixx>
+          <ixy>-4.4638748338417258e-10</ixy>
+          <ixz>3.4227778571969759e-06</ixz>
+          <iyy>5.004643474298e-05</iyy>
+          <iyz>-5.4239454493256225e-10</iyz>
           <izz>3.8009175095211288e-05</izz>
         </inertia>
       </inertial>
@@ -840,7 +840,7 @@
         </surface>
       </collision>
       <collision name='phantomx_pincher_arm_wrist_flex_link_fixed_joint_lump__phantomx_pincher_arm_wrist_F3_0_link_collision_1'>
-        <pose>5.5109105961630888e-19 6.7489190219783585e-35 0.031 3.1415926535897931 1.224646799147353e-16 1.224646799147353e-16</pose>
+        <pose>5.5109105961630888e-19 6.7489190219783585e-35 0.031 -3.1415926535897931 1.224646799147353e-16 1.224646799147353e-16</pose>
         <geometry>
           <box>
             <size>0.025000000000000001 0.037999999999999999 0.0089999999999999993</size>
@@ -878,7 +878,7 @@
         </surface>
       </collision>
       <collision name='phantomx_pincher_arm_wrist_flex_link_fixed_joint_lump__phantomx_pincher_gripper_finger_base_link_collision_3'>
-        <pose>1.1842108848063281e-18 -6.9388939039072284e-18 0.064499999999999988 2.4492935982947059e-16 -1.5707963267948966 0</pose>
+        <pose>1.1842108848063281e-18 -6.9388939039072284e-18 0.064499999999999988 2.4492935982947064e-16 -1.5707963267948966 0</pose>
         <geometry>
           <box>
             <size>0.002 0.074999999999999997 0.040000000000000001</size>
@@ -906,7 +906,7 @@
         </geometry>
       </visual>
       <visual name='phantomx_pincher_arm_wrist_flex_link_fixed_joint_lump__phantomx_pincher_arm_wrist_F3_0_link_visual_1'>
-        <pose>0 0 0.026499999999999999 3.1415926535897931 1.224646799147353e-16 1.224646799147353e-16</pose>
+        <pose>0 0 0.026499999999999999 -3.1415926535897931 1.224646799147353e-16 1.224646799147353e-16</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
@@ -924,7 +924,7 @@
         </geometry>
       </visual>
       <visual name='phantomx_pincher_arm_wrist_flex_link_fixed_joint_lump__phantomx_pincher_gripper_finger_base_link_visual_3'>
-        <pose>1.1842108848063281e-18 -6.9388939039072284e-18 0.064499999999999988 2.4492935982947059e-16 -1.5707963267948966 0</pose>
+        <pose>1.1842108848063281e-18 -6.9388939039072284e-18 0.064499999999999988 2.4492935982947064e-16 -1.5707963267948966 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
@@ -934,7 +934,7 @@
       </visual>
     </link>
     <joint name='phantomx_pincher_gripper_finger1_joint' type='prismatic'>
-      <pose relative_to='phantomx_pincher_arm_wrist_flex_link'>-1.366750967786769e-18 0.011499999999999981 0.083499999999999991 -1.9155381182201971e-16 -1.5700924586837759e-16 1.570796326794897</pose>
+      <pose relative_to='phantomx_pincher_arm_wrist_flex_link'>-4.8361979197403839e-18 0.011499999999999989 0.083499999999999991 -2.0781265158618307e-16 -2.5177270856672982e-16 1.570796326794897</pose>
       <parent>phantomx_pincher_arm_wrist_flex_link</parent>
       <child>phantomx_pincher_gripper_finger1_link</child>
       <axis>
@@ -1006,7 +1006,7 @@
       </visual>
     </link>
     <joint name='phantomx_pincher_gripper_finger2_joint' type='prismatic'>
-      <pose relative_to='phantomx_pincher_arm_wrist_flex_link'>-1.1521485437130681e-18 -0.01150000000000001 0.083499999999999991 3.4544565953642221e-17 1.5700924586837749e-16 -1.5707963267948959</pose>
+      <pose relative_to='phantomx_pincher_arm_wrist_flex_link'>1.4499366702521429e-18 -0.01150000000000001 0.083499999999999991 -1.177025760020373e-16 2.632694444181953e-16 -1.5707963267948959</pose>
       <parent>phantomx_pincher_arm_wrist_flex_link</parent>
       <child>phantomx_pincher_gripper_finger2_link</child>
       <axis>
@@ -1138,19 +1138,19 @@
       <pose>0 0 0 0 0 0</pose>
     </frame>
     <frame name='phantomx_pincher_gripper_finger_base_joint' attached_to='phantomx_pincher_gripper_servo_link'>
-      <pose>0 0.019 0 3.1415926535897931 0 1.5707963267948959</pose>
+      <pose>0 0.019 0 3.1415926535897931 1.0033023363942468e-32 1.5707963267948959</pose>
     </frame>
     <frame name='phantomx_pincher_gripper_finger_base_link' attached_to='phantomx_pincher_gripper_finger_base_joint'>
       <pose>0 0 0 0 0 0</pose>
     </frame>
     <frame name='phantomx_pincher_gripper_servo_joint' attached_to='phantomx_pincher_arm_wrist_F3_0_link'>
-      <pose>0 0 -0.019 -1.570796326794897 0 -1.570796326794897</pose>
+      <pose>0 0 -0.019 -1.570796326794897 1.1102230246251565e-16 -1.570796326794897</pose>
     </frame>
     <frame name='phantomx_pincher_gripper_servo_link' attached_to='phantomx_pincher_gripper_servo_joint'>
       <pose>0 0 0 0 0 0</pose>
     </frame>
     <frame name='phantomx_pincher_arm_wrist_F3_0_joint' attached_to='phantomx_pincher_arm_wrist_flex_link'>
-      <pose>0 0 0.026499999999999999 3.1415926535897931 1.224646799147353e-16 1.224646799147353e-16</pose>
+      <pose>0 0 0.026499999999999999 -3.1415926535897931 1.224646799147353e-16 1.224646799147353e-16</pose>
     </frame>
     <frame name='phantomx_pincher_arm_wrist_F3_0_link' attached_to='phantomx_pincher_arm_wrist_F3_0_joint'>
       <pose>0 0 0 0 0 0</pose>
