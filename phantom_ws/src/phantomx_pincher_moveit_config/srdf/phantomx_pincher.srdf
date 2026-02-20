@@ -51,13 +51,18 @@
     <joint name="phantomx_pincher_arm_elbow_flex_joint" value="1.3962634015954636"/>
     <joint name="phantomx_pincher_arm_wrist_flex_joint" value="1.3962634015954636"/>
   </group_state>
+  <!-- Valores en metros POR DEDO, medidos físicamente en el hardware real.     -->
+  <!-- Abierto: 39.1 mm apertura total / 2 = 0.01955 m por dedo.              -->
+  <!-- Cerrado: 7.5 mm apertura total / 2 = 0.00375 m por dedo.               -->
+  <!-- Deben coincidir con los límites en joint_limits.yaml y con las          -->
+  <!-- constantes GRIPPER_OPEN_M / GRIPPER_CLOSED_M en follow_joint_trajectory_node.py. -->
   <group_state group="gripper" name="open">
-    <joint name="phantomx_pincher_gripper_finger1_joint" value="0.0158"/>
-    <joint name="phantomx_pincher_gripper_finger2_joint" value="0.0158"/>
+    <joint name="phantomx_pincher_gripper_finger1_joint" value="0.01955"/>
+    <joint name="phantomx_pincher_gripper_finger2_joint" value="0.01955"/>
   </group_state>
   <group_state group="gripper" name="closed">
-    <joint name="phantomx_pincher_gripper_finger1_joint" value="0.001"/>
-    <joint name="phantomx_pincher_gripper_finger2_joint" value="0.001"/>
+    <joint name="phantomx_pincher_gripper_finger1_joint" value="0.00375"/>
+    <joint name="phantomx_pincher_gripper_finger2_joint" value="0.00375"/>
   </group_state>
   <disable_collisions link1="phantomx_pincher_arm_elbow_F10_0_link" link2="phantomx_pincher_arm_elbow_F10_1_link" reason="Adjacent"/>
   <disable_collisions link1="phantomx_pincher_arm_elbow_F10_0_link" link2="phantomx_pincher_arm_elbow_F10_2_link" reason="Never"/>

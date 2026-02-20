@@ -30,8 +30,13 @@ joint_limits:
     max_acceleration: 1.5707963
   phantomx_pincher_gripper_finger1_joint:
     has_position_limits: true
-    min_position: 0.0
-    max_position: 0.0158
+    # Límites en metros POR DEDO medidos experimentalmente en el hardware real.
+    # min = cerrado (7.5 mm total / 2), max = abierto (39.1 mm total / 2).
+    # Estos valores deben coincidir con GRIPPER_CLOSED_M y GRIPPER_OPEN_M del nodo
+    # follow_joint_trajectory_node.py y con los estados nombrados en el SRDF.
+    # MoveIt rechaza cualquier estado fuera de estos límites (CheckStartStateBounds).
+    min_position: 0.00375
+    max_position: 0.01955
     has_velocity_limits: true
     max_velocity: 0.01
     # Must be true: AddTimeOptimalParameterization (TOTG) requires acceleration limits
@@ -43,8 +48,9 @@ joint_limits:
     max_acceleration: 1.0
   phantomx_pincher_gripper_finger2_joint:
     has_position_limits: true
-    min_position: 0.0
-    max_position: 0.0158
+    # Mismos límites que finger1: ambos dedos son simétricos y usan el mismo servo.
+    min_position: 0.00375
+    max_position: 0.01955
     has_velocity_limits: true
     max_velocity: 0.01
     # Same reasoning as finger1: TOTG requires acceleration limits to be enabled.

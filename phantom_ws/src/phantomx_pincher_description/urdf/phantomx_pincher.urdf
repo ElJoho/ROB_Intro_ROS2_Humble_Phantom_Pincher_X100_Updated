@@ -848,7 +848,11 @@ Lateral izquierda	0 0 ${PI/2}
     <child link="phantomx_pincher_gripper_finger1_link"/>
     <origin rpy="1.5707963267948966 0.0 1.5707963267948966" xyz="0.019 0.0115 0.0"/>
     <axis xyz="1.0 0.0 0.0"/>
-    <limit effort="30" lower="0.001" upper="0.0158" velocity="0.01"/>
+    <!-- Límites actualizados con valores medidos físicamente en el hardware real. -->
+    <!-- lower = cerrado: 7.5 mm apertura total / 2 = 0.00375 m por dedo.        -->
+    <!-- upper = abierto: 39.1 mm apertura total / 2 = 0.01955 m por dedo.       -->
+    <!-- Deben coincidir con joint_limits.yaml y follow_joint_trajectory_node.py. -->
+    <limit effort="30" lower="0.00375" upper="0.01955" velocity="0.01"/>
     <dynamics damping="1.8" friction="0.06"/>
   </joint>
   <gazebo reference="phantomx_pincher_gripper_finger1_joint">
@@ -883,7 +887,8 @@ Lateral izquierda	0 0 ${PI/2}
     <child link="phantomx_pincher_gripper_finger2_link"/>
     <origin rpy="1.5707963267948966 3.141592653589793 1.5707963267948966" xyz="0.019 -0.0115 0.0"/>
     <axis xyz="1.0 0.0 0.0"/>
-    <limit effort="30" lower="0.001" upper="0.0158" velocity="0.01"/>
+    <!-- Mismos límites que finger1: ambos dedos son simétricos y usan el mismo servo. -->
+    <limit effort="30" lower="0.00375" upper="0.01955" velocity="0.01"/>
     <dynamics damping="1.8" friction="0.06"/>
   </joint>
   <gazebo reference="phantomx_pincher_gripper_finger2_joint">

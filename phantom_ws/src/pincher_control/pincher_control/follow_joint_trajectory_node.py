@@ -51,6 +51,19 @@ ADDR_PRESENT_POSITION = 36  # Para leer la posición actual del servo
 DXL_MIN_TICK = 0
 DXL_MAX_TICK = 1023
 
+# Calibración del gripper medida experimentalmente en el hardware real.
+# El joint del gripper es PRISMÁTICO (unidades en metros en el URDF), no angular,
+# por lo que no puede usar dxl_tick_to_rad() para publicar en /joint_states.
+# Estos valores se obtuvieron moviendo el gripper a mano y leyendo los ticks.
+GRIPPER_OPEN_TICKS   = 520    # ticks leídos cuando el gripper está físicamente abierto
+GRIPPER_CLOSED_TICKS = 0      # ticks leídos cuando el gripper está físicamente cerrado
+# Los valores en metros son POR DEDO (apertura total / 2), no la apertura total.
+# El URDF define cada finger joint como el desplazamiento individual de cada dedo,
+# por lo que publicar la apertura total causaría que RViz mostrara el doble del
+# movimiento real. Medidas físicas: abierto=39.1mm total, cerrado=7.5mm total.
+GRIPPER_OPEN_M       = 0.01955 # metros por dedo cuando está abierto (39.1 mm / 2)
+GRIPPER_CLOSED_M     = 0.00375 # metros por dedo cuando está cerrado (7.5 mm / 2)
+
 
 class PincherFollowJointTrajectory(Node):
     """
@@ -101,6 +114,9 @@ class PincherFollowJointTrajectory(Node):
         moving_speed = self.get_parameter("moving_speed").get_parameter_value().integer_value
         torque_limit = self.get_parameter("torque_limit").get_parameter_value().integer_value
         gripper_id   = self.get_parameter("gripper_id").get_parameter_value().integer_value
+        # Se guarda como atributo de instancia para poder identificar el servo
+        # del gripper en read_servo_positions() y aplicar la conversión correcta.
+        self.gripper_id = gripper_id
 
         # ------------ Mapa joint_name → ID de servo Dynamixel ------------
         #
@@ -431,14 +447,22 @@ class PincherFollowJointTrajectory(Node):
                 continue
             commanded_ids.add(dxl_id)
 
-            # Aplicar el signo para que el sentido físico del servo coincida
-            # con el sentido de la articulación en el URDF/MoveIt.
-            sign = self.joint_sign_send.get(dxl_id, 1)
-            hw_rad = pos_rad * sign
-
-            # Convertir radianes (lado hardware) a ticks del AX-12A
-            tick = self.rad_to_dxl_tick(hw_rad)
-            tick_clamped = max(DXL_MIN_TICK, min(DXL_MAX_TICK, tick))
+            # El gripper es un joint prismático (posición en metros). Los joints
+            # del brazo son revolutos (posición en radianes). Se necesita una
+            # conversión distinta para cada caso.
+            if dxl_id == self.gripper_id:
+                # Conversión directa metros → ticks usando calibración real.
+                # No se aplica signo: la dirección está codificada en los puntos
+                # de calibración (GRIPPER_CLOSED_TICKS=0, GRIPPER_OPEN_TICKS=520).
+                # El clamping al rango [DXL_MIN_TICK, DXL_MAX_TICK] está dentro
+                # de meters_to_dxl_tick.
+                tick_clamped = self.meters_to_dxl_tick(pos_rad)
+            else:
+                # Joints del brazo: aplicar signo y convertir radianes → ticks
+                sign = self.joint_sign_send.get(dxl_id, 1)
+                hw_rad = pos_rad * sign
+                tick = self.rad_to_dxl_tick(hw_rad)
+                tick_clamped = max(DXL_MIN_TICK, min(DXL_MAX_TICK, tick))
 
             commands_to_send.append((dxl_id, tick_clamped))
 
@@ -485,6 +509,43 @@ class PincherFollowJointTrajectory(Node):
         deg = (tick - 512.0) * (300.0 / 1023.0)
         return math.radians(deg)
 
+    def meters_to_dxl_tick(self, meters: float) -> int:
+        """
+        Convierte metros a ticks del AX-12A para el joint PRISMÁTICO del gripper.
+
+        Es la función inversa de dxl_tick_to_meters. Usa interpolación lineal
+        entre los mismos puntos de calibración medidos físicamente:
+          GRIPPER_CLOSED_M (0.00375 m) → GRIPPER_CLOSED_TICKS (0)
+          GRIPPER_OPEN_M   (0.01955 m) → GRIPPER_OPEN_TICKS   (520)
+
+        Se usa en send_point() para convertir la posición comandada por MoveIt
+        (en metros) al tick correcto antes de enviarlo al servo Dynamixel.
+        Sin esta función, send_point() usaba rad_to_dxl_tick() tratando los
+        metros como radianes, lo que mapeaba todo el rango a ~3 ticks y el
+        servo no se movía.
+        """
+        # t=0 en cerrado, t=1 en abierto
+        t = (meters - GRIPPER_CLOSED_M) / (GRIPPER_OPEN_M - GRIPPER_CLOSED_M)
+        tick = GRIPPER_CLOSED_TICKS + t * (GRIPPER_OPEN_TICKS - GRIPPER_CLOSED_TICKS)
+        # Clampear al rango válido del AX-12A antes de retornar
+        return max(DXL_MIN_TICK, min(DXL_MAX_TICK, int(round(tick))))
+
+    def dxl_tick_to_meters(self, tick: int) -> float:
+        """
+        Convierte ticks del AX-12A a metros para el joint PRISMÁTICO del gripper.
+
+        Usa interpolación lineal entre los dos puntos de calibración medidos
+        físicamente en el hardware real:
+          GRIPPER_CLOSED_TICKS (0)   → GRIPPER_CLOSED_M (0.0075 m / 7.5 mm)
+          GRIPPER_OPEN_TICKS   (520) → GRIPPER_OPEN_M   (0.0391 m / 39.1 mm)
+
+        Se usa en lugar de dxl_tick_to_rad() porque el joint del gripper es
+        prismático: su posición en /joint_states debe estar en metros, no radianes.
+        """
+        # t=0 cuando está cerrado, t=1 cuando está abierto
+        t = (tick - GRIPPER_CLOSED_TICKS) / (GRIPPER_OPEN_TICKS - GRIPPER_CLOSED_TICKS)
+        return GRIPPER_CLOSED_M + t * (GRIPPER_OPEN_M - GRIPPER_CLOSED_M)
+
     def read_servo_positions(self):
         """
         Lee las posiciones actuales de todos los servos desde el hardware
@@ -523,12 +584,18 @@ class PincherFollowJointTrajectory(Node):
                     )
                     continue
 
-                # Convertir tick a radianes (lado hardware)
-                hw_rad = self.dxl_tick_to_rad(tick)
-
-                # Aplicar el signo para obtener radianes del URDF/MoveIt
-                sign = self.joint_sign_read.get(dxl_id, 1)
-                urdf_rad = hw_rad * sign
+                # El gripper es un joint prismático (metros), los demás son
+                # revolutos (radianes). Se usa una conversión distinta según el tipo.
+                if dxl_id == self.gripper_id:
+                    # Conversión directa ticks → metros usando calibración real.
+                    # No se aplica signo: la dirección ya está codificada en
+                    # los puntos de calibración (0 ticks = cerrado, 520 = abierto).
+                    urdf_rad = self.dxl_tick_to_meters(tick)
+                else:
+                    # Joints del brazo: conversión angular estándar ticks → radianes
+                    hw_rad = self.dxl_tick_to_rad(tick)
+                    sign = self.joint_sign_read.get(dxl_id, 1)
+                    urdf_rad = hw_rad * sign
 
                 # Actualizar la posición de esta joint
                 self.current_positions[j_name] = urdf_rad
