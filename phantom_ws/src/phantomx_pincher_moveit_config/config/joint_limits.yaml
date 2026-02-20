@@ -30,25 +30,24 @@ joint_limits:
     max_acceleration: 1.5707963
   phantomx_pincher_gripper_finger1_joint:
     has_position_limits: true
-    min_position: 0.0        # allow 0.0 as valid start
-    max_position: 0.0158     # keep URDF upper limit
+    min_position: 0.0
+    max_position: 0.0158
     has_velocity_limits: true
     max_velocity: 0.01
-    has_acceleration_limits: false
-    max_acceleration: 0.0
-  #  has_velocity_limits: true
-  #  max_velocity: 0.01
-  #  has_acceleration_limits: true
-  #  max_acceleration: 1.0
+    # Must be true: AddTimeOptimalParameterization (TOTG) requires acceleration limits
+    # for every joint in the planning group. Without this, MoveIt fails with FAILURE
+    # before generating any trajectory.
+    has_acceleration_limits: true
+    # 1.0 rad/s² is a safe value consistent with the arm joints. The gripper's very
+    # low max_velocity (0.01 rad/s) already ensures slow, gentle movement regardless.
+    max_acceleration: 1.0
   phantomx_pincher_gripper_finger2_joint:
     has_position_limits: true
     min_position: 0.0
     max_position: 0.0158
     has_velocity_limits: true
     max_velocity: 0.01
-    has_acceleration_limits: false
-    max_acceleration: 0.0
-  #  has_velocity_limits: true
-  #  max_velocity: 0.01
-  #  has_acceleration_limits: true
-  #  max_acceleration: 1.0
+    # Same reasoning as finger1: TOTG requires acceleration limits to be enabled.
+    has_acceleration_limits: true
+    # Matches finger1 for symmetric gripper behaviour.
+    max_acceleration: 1.0

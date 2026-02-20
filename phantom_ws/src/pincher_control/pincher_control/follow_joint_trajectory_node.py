@@ -142,11 +142,11 @@ class PincherFollowJointTrajectory(Node):
         # como la lectura de posiciones, garantizando que ambas operaciones
         # sean siempre consistentes entre sí.
         servo_axis_sign = {
-            1: -1,   # shoulder_pan:  eje del servo invertido respecto al URDF
+            1:  1,   # shoulder_pan:  eje del servo invertido respecto al URDF
             2:  1,   # shoulder_lift: eje del servo coincide con el URDF
             3:  1,   # elbow_flex:    eje del servo coincide con el URDF
             4:  1,   # wrist_flex:    eje del servo coincide con el URDF
-            gripper_id:  1,  # gripper: eje del servo coincide con el URDF
+            gripper_id:  -1,  # gripper: eje del servo coincide con el URDF
         }
 
         # Signos derivados de servo_axis_sign.
