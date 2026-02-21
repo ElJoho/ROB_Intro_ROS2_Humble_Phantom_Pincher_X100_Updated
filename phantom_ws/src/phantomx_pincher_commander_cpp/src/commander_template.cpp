@@ -26,11 +26,11 @@ public:
     {
         node_ = node;
         arm_ = std::make_shared<MoveGroupInterface>(node_, "arm");
-        arm_->setMaxVelocityScalingFactor(1.0);
-        arm_->setMaxAccelerationScalingFactor(1.0);
-        arm_->setGoalPositionTolerance(0.01);      // 2 mm
-        arm_->setGoalOrientationTolerance(0.1);    // ~3 degrees
-        arm_->setPlanningTime(5.0);                 // more chance to find IK
+        arm_->setMaxVelocityScalingFactor(0.3);        // 30% → menos inercia, mejor precisión
+        arm_->setMaxAccelerationScalingFactor(0.3);    // 30% → arranque/frenado más suave
+        arm_->setGoalPositionTolerance(0.005);         // 5 mm → tolerancia más estricta
+        arm_->setGoalOrientationTolerance(0.05);       // ~3° → tolerancia más estricta
+        arm_->setPlanningTime(5.0);                    // more chance to find IK
 
         gripper_ = std::make_shared<MoveGroupInterface>(node_, "gripper");
 

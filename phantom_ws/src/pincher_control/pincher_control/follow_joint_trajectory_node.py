@@ -41,11 +41,13 @@ from sensor_msgs.msg import JointState
 from dynamixel_sdk import PortHandler, PacketHandler
 
 # Direcciones de registro en el AX-12A (igual que en control_servo.py)
-ADDR_TORQUE_ENABLE    = 24
-ADDR_GOAL_POSITION    = 30
-ADDR_MOVING_SPEED     = 32
-ADDR_TORQUE_LIMIT     = 34
-ADDR_PRESENT_POSITION = 36  # Para leer la posición actual del servo
+ADDR_TORQUE_ENABLE         = 24
+ADDR_CW_COMPLIANCE_MARGIN  = 26  # Zona muerta sentido horario (ticks, default=1)
+ADDR_CCW_COMPLIANCE_MARGIN = 27  # Zona muerta sentido antihorario (ticks, default=1)
+ADDR_GOAL_POSITION         = 30
+ADDR_MOVING_SPEED          = 32
+ADDR_TORQUE_LIMIT          = 34
+ADDR_PRESENT_POSITION      = 36  # Para leer la posición actual del servo
 
 # Rango básico de ticks en AX-12A (0–1023)
 DXL_MIN_TICK = 0
@@ -101,8 +103,9 @@ class PincherFollowJointTrajectory(Node):
         self.declare_parameter("baudrate", 1000000)
         # Prefijo de joints según el URDF (por defecto phantomx_pincher_)
         self.declare_parameter("joint_prefix", "phantomx_pincher_")
-        # Velocidad de movimiento (0–1023)
-        self.declare_parameter("moving_speed", 200)
+        # Velocidad de movimiento (0–1023). Reducida para mayor precisión:
+        # menos inercia al llegar al objetivo → menor overshoot.
+        self.declare_parameter("moving_speed", 100)
         # Límite de torque (0–1023)
         self.declare_parameter("torque_limit", 800)
         # ID del servo que mueve el gripper real
@@ -220,10 +223,18 @@ class PincherFollowJointTrajectory(Node):
         # AX-12A usan protocolo 1.0
         self.packet = PacketHandler(1.0)
 
-        # Configura cada servo: límite de torque, velocidad, torque enable.
+        # Configura cada servo: compliance margin, límite de torque, velocidad, torque enable.
         # Nota: el ID del gripper puede aparecer dos veces (finger1/finger2),
         # pero escribir los mismos valores dos veces no es un problema.
         for joint_name, dxl_id in self.joint_to_id.items():
+            # Compliance margin = 1: zona muerta mínima de ±1 tick (±0.29°).
+            # Margin=0 causaba oscilación continua ("hunting"): el servo se pasaba
+            # del objetivo por 1 tick, corregía, se volvía a pasar, y así sin fin.
+            # Con margin=1 el servo se detiene cuando está dentro de ±0.29° del
+            # objetivo, rompiendo el ciclo de oscilación sin perder precisión
+            # significativa (1 tick ≈ 0.29° es el límite de resolución del hardware).
+            self.packet.write1ByteTxRx(self.port, dxl_id, ADDR_CW_COMPLIANCE_MARGIN,  1)
+            self.packet.write1ByteTxRx(self.port, dxl_id, ADDR_CCW_COMPLIANCE_MARGIN, 1)
             # Límite de torque
             self.packet.write2ByteTxRx(self.port, dxl_id, ADDR_TORQUE_LIMIT, torque_limit)
             # Velocidad
