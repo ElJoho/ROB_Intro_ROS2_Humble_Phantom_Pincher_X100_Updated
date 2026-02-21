@@ -112,14 +112,14 @@ public:
     void openGripper()
     {
         gripper_->setStartStateToCurrentState();
-        gripper_->setNamedTarget("gripper_open");
+        gripper_->setNamedTarget("open");
         planAndExecute(gripper_);
     }
 
     void closeGripper()
     {
         gripper_->setStartStateToCurrentState();
-        gripper_->setNamedTarget("gripper_closed");
+        gripper_->setNamedTarget("closed");
         planAndExecute(gripper_);
     }
 
@@ -150,7 +150,7 @@ private:
     {
         auto joints = msg.data;
 
-        if (joints.size() == 6) {
+        if (joints.size() == 4) {
             goToJointTarget(joints);
         }
     }
