@@ -2,6 +2,7 @@
 #include <example_interfaces/msg/bool.hpp>
 #include <example_interfaces/msg/float64_multi_array.hpp>
 #include <phantomx_pincher_interfaces/msg/pose_command.hpp>
+#include <std_msgs/msg/string.hpp>
 #if __has_include(<moveit/move_group_interface/move_group_interface.hpp>)
   #include <moveit/move_group_interface/move_group_interface.hpp>
 #else
@@ -17,6 +18,7 @@ using MoveGroupInterface = moveit::planning_interface::MoveGroupInterface;
 using Bool = example_interfaces::msg::Bool;
 using FloatArray = example_interfaces::msg::Float64MultiArray;
 using PoseCmd = phantomx_pincher_interfaces::msg::PoseCommand;
+using StringMsg = std_msgs::msg::String;
 using namespace std::placeholders;
 
 class Commander
@@ -48,6 +50,9 @@ public:
 
         pose_cmd_sub_ = node_->create_subscription<PoseCmd>(
             "pose_command", 10, std::bind(&Commander::poseCmdCallback, this, _1));
+
+        named_target_sub_ = node_->create_subscription<StringMsg>(
+            "named_target", 10, std::bind(&Commander::namedTargetCallback, this, _1));
     }
 
     void goToNamedTarget(const std::string &name)
@@ -157,7 +162,12 @@ private:
 
     void poseCmdCallback(const PoseCmd &msg)
     {
-        goToPoseTarget(msg.x, msg.y, msg.z, msg.roll, msg.pitch, msg.yaw, msg.cartesian_path);   
+        goToPoseTarget(msg.x, msg.y, msg.z, msg.roll, msg.pitch, msg.yaw, msg.cartesian_path);
+    }
+
+    void namedTargetCallback(const StringMsg &msg)
+    {
+        goToNamedTarget(msg.data);
     }
 
     std::shared_ptr<rclcpp::Node> node_;
@@ -167,6 +177,7 @@ private:
     rclcpp::Subscription<Bool>::SharedPtr open_gripper_sub_;
     rclcpp::Subscription<FloatArray>::SharedPtr joint_cmd_sub_;
     rclcpp::Subscription<PoseCmd>::SharedPtr pose_cmd_sub_;
+    rclcpp::Subscription<StringMsg>::SharedPtr named_target_sub_;
 };
 
 

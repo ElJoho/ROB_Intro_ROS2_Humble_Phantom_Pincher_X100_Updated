@@ -10,9 +10,9 @@
 
 1. [Visión General de la Arquitectura](#1-visión-general-de-la-arquitectura)
 2. [Comandos de Lanzamiento Requeridos](#2-comandos-de-lanzamiento-requeridos)
-3. [Modalidad 1 — Control Directo de Motores (ticks Dynamixel)](#3-modalidad-1--control-directo-de-motores-ticks-dynamixel)
+3. [Modalidad 1 — FollowJointTrajectory (Trayectoria Articular Directa)](#3-modalidad-1--followjointtrajectory-trayectoria-articular-directa)
 4. [Modalidad 2 — Meta Cartesiana con MoveIt](#4-modalidad-2--meta-cartesiana-con-moveit)
-5. [Modalidad 3 — Control del Gripper por Ticks](#5-modalidad-3--control-del-gripper-por-ticks)
+5. [Modalidad 3 — Control del Gripper (Action Server)](#5-modalidad-3--control-del-gripper-action-server)
 6. [Modalidad 4 — Control del Gripper por Apertura (MoveIt)](#6-modalidad-4--control-del-gripper-por-apertura-moveit)
 7. [Modalidad 5 — Estados Nombrados de MoveIt (Move Groups en RViz)](#7-modalidad-5--estados-nombrados-de-moveit-move-groups-en-rviz)
 8. [Todos los Tópicos, Servicios y Acciones](#8-todos-los-tópicos-servicios-y-acciones)
@@ -37,6 +37,7 @@
   │  /open_gripper          │   │  - estados nombrados     │
   │  /joint_command         │   └────────────┬─────────────┘
   │  /pose_command          │                │ goals FollowJointTrajectory
+  │  /named_target          │                │
   └────────────┬────────────┘                │
                │ MoveGroupInterface          │
                └──────────────┬─────────────┘
@@ -129,98 +130,12 @@ Expone dos action servers para ejecución directa de trayectorias sin la sobreca
 
 ---
 
-## 3. Modalidad 1 — Control Directo de Motores (ticks Dynamixel)
-
-Estos comandos evitan MoveIt por completo y envían valores de ticks crudos (0–1023)
-directamente a los servos AX-12A a través del bus Dynamixel.
-
-**Referencia de ticks AX-12A:**
-- Rango: 0–1023
-- Centro (0 rad): ~512 ticks
-- Rango completo: 0°–300° mapeado a 0–1023 ticks
-
-### 3.1 `control_servo` — Comando de Ticks de Una Sola Vez (Sin GUI)
-
-**Nodo:** `pincher_control/control_servo`
-**Propósito:** Enviar un único conjunto de posiciones objetivo en ticks a cualquier
-subconjunto de servos, esperar la finalización y apagarse.
-
-**Sintaxis:**
-```bash
-ros2 run pincher_control control_servo --ros-args \
-  -p port:=/dev/ttyUSB0 \
-  -p baudrate:=1000000 \
-  -p dxl_ids:=[1,2,3,4,5] \
-  -p goal_positions:=[<t1>,<t2>,<t3>,<t4>,<t5>] \
-  -p moving_speed:=<velocidad> \
-  -p torque_limit:=<limite> \
-  -p delay:=<segundos>
-```
-
-**Parámetros:**
-
-| Parámetro        | Tipo       | Por defecto             | Descripción                                    |
-|------------------|------------|-------------------------|------------------------------------------------|
-| `port`           | string     | `/dev/ttyUSB0`          | Puerto serie del adaptador U2D2               |
-| `baudrate`       | int        | `1000000`               | Baudrate del bus Dynamixel                    |
-| `dxl_ids`        | int[]      | `[1,2,3,4,5]`           | Lista de IDs de servo a comandar              |
-| `goal_positions` | int[]      | `[512,512,512,512,512]` | Valores de ticks objetivo (misma longitud que IDs) |
-| `moving_speed`   | int        | `100`                   | Velocidad del motor 0–1023 (0=velocidad máxima) |
-| `torque_limit`   | int        | `1000`                  | Límite de torque 0–1023                       |
-| `delay`          | float      | `2.0`                   | Segundos a esperar para completar el movimiento |
-
-**Ejemplo — Mover pan al centro, lift abajo, resto del brazo neutro:**
-```bash
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[1,2,3,4] \
-  -p goal_positions:=[512,200,700,512] \
-  -p moving_speed:=150 \
-  -p torque_limit:=800 \
-  -p delay:=3.0
-```
-
-**Comportamiento esperado:** Los motores se mueven a las posiciones en ticks especificadas
-a la velocidad dada. Tras `delay` segundos, el torque se desactiva y el nodo termina.
-
----
-
-### 3.2 `control_servo` — GUI Interactiva con Sliders
-
-**Propósito:** Abrir una GUI de Tkinter con sliders por motor (tiempo real) y un panel
-de entrada de valores manuales. También integra visualización en RViz.
-
-```bash
-ros2 run pincher_control control_servo
-```
-
-**Pestañas de la GUI:**
-- **Control por Sliders** — Sliders en tiempo real (rango 0–4095) para cada uno de los
-  5 motores, más un slider de velocidad.
-- **Control por Valores** — Introducir un valor de ticks específico por motor y pulsar
-  "Mover Motor". Pulsar "MOVER TODOS LOS MOTORES" para comandar todos a la vez.
-- **Visualización RViz** — Botón para lanzar `phantomx_pincher_description/display.launch.py`
-  y muestra las posiciones actuales de los joints en radianes.
-
-**Botones comunes (todas las pestañas):**
-- **HOME** — Enviar todos los motores a 512 ticks (posición central, 0 rad).
-- **PARADA DE EMERGENCIA** — Deshabilitar el torque en todos los motores inmediatamente.
-
-**Comportamiento esperado:** Mover un slider envía inmediatamente el valor de ticks al
-servo correspondiente. Los joint states se publican a 10 Hz en `/joint_states`
-para la visualización en RViz.
-
----
-
-### 3.3 Action Server — FollowJointTrajectory (trayectoria directa)
+## 3. Modalidad 1 — FollowJointTrajectory (Trayectoria Articular Directa)
 
 El nodo `follow_joint_trajectory` expone dos action servers que aceptan goals de tipo
 `control_msgs/action/FollowJointTrajectory`. Se pueden llamar directamente desde la
-terminal usando `ros2 action`.
-
-**Prerrequisito:** El driver de hardware debe estar ejecutándose:
-```bash
-ros2 run pincher_control follow_joint_trajectory
-```
+terminal usando `ros2 action`. Los valores van en **radianes** para el brazo y en
+**metros por dedo** para el gripper.
 
 **Action server del brazo:**
 ```
@@ -232,7 +147,8 @@ ros2 run pincher_control follow_joint_trajectory
 /gripper_trajectory_controller/follow_joint_trajectory
 ```
 
-**Ejemplo — Mover el brazo a una posición articular con un solo punto:**
+### 3.1 Mover el brazo con un solo punto de destino
+
 ```bash
 ros2 action send_goal \
   /joint_trajectory_controller/follow_joint_trajectory \
@@ -255,7 +171,8 @@ ros2 action send_goal \
 
 **Los valores están en radianes** (convertidos internamente a ticks mediante: `tick = 512 + deg × 1023/300`).
 
-**Ejemplo — Múltiples puntos de paso:**
+### 3.2 Mover el brazo con múltiples puntos de paso
+
 ```bash
 ros2 action send_goal \
   /joint_trajectory_controller/follow_joint_trajectory \
@@ -331,7 +248,7 @@ ros2 topic pub --once /pose_command \
 
 **Comportamiento esperado (cartesian_path: false):** MoveIt usa OMPL para encontrar
 una trayectoria articular libre de colisiones desde la pose actual hasta la objetivo.
-La velocidad y aceleración se escalan al 100% por defecto (configurado en `commander_template.cpp`).
+La velocidad y aceleración se escalan al 30% (configurado en `commander_template.cpp`).
 
 **Comportamiento esperado (cartesian_path: true):** MoveIt usa `computeCartesianPath`
 con resolución de 1 cm. La trayectoria solo se ejecuta si el 100% del camino es
@@ -354,55 +271,7 @@ planificación al iniciarse.
 
 ---
 
-## 5. Modalidad 3 — Control del Gripper por Ticks
-
-### 5.1 Comando directo de ticks al servo del gripper (control_servo)
-
-El servo del gripper tiene ID 5. Usar `control_servo` para enviar un valor de ticks crudo:
-
-```bash
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[5] \
-  -p goal_positions:=[<tick>] \
-  -p moving_speed:=100 \
-  -p delay:=2.0
-```
-
-**Calibración de ticks del gripper:**
-
-| Estado  | Ticks | Apertura física (total) |
-|---------|:-----:|:-----------------------:|
-| Cerrado | 0     | 7.5 mm                  |
-| Abierto | 520   | 39.1 mm                 |
-
-**Ejemplo — Abrir gripper completamente:**
-```bash
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[5] \
-  -p goal_positions:=[520] \
-  -p moving_speed:=100 \
-  -p delay:=2.0
-```
-
-**Ejemplo — Cerrar gripper completamente:**
-```bash
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[5] \
-  -p goal_positions:=[0] \
-  -p moving_speed:=100 \
-  -p delay:=2.0
-```
-
-**Ejemplo — Gripper a media apertura (≈260 ticks):**
-```bash
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[5] \
-  -p goal_positions:=[260] \
-  -p moving_speed:=80 \
-  -p delay:=2.0
-```
-
-### 5.2 Vía el Action Server del Gripper (conversión ticks → metros interna)
+## 5. Modalidad 3 — Control del Gripper (Action Server)
 
 El nodo `follow_joint_trajectory` acepta posiciones del gripper en **metros por dedo**
 y las convierte internamente a ticks. La fórmula de conversión es:
@@ -412,7 +281,16 @@ t = (metros - 0.00375) / (0.01955 - 0.00375)
 tick = round(t × 520)    # limitado al rango [0, 1023]
 ```
 
-**Ejemplo — Abrir gripper vía action (0.01955 m por dedo = abierto):**
+**Referencia física:**
+
+| Estado  | Valor por dedo (m) | Apertura total (mm) | Ticks |
+|---------|:------------------:|:-------------------:|:-----:|
+| Abierto | 0.01955            | 39.1                | 520   |
+| Cerrado | 0.00375            | 7.5                 | 0     |
+
+### 5.1 Vía el Action Server del Gripper
+
+**Ejemplo — Abrir gripper (0.01955 m por dedo = abierto):**
 ```bash
 ros2 action send_goal \
   /gripper_trajectory_controller/follow_joint_trajectory \
@@ -431,7 +309,7 @@ ros2 action send_goal \
   }"
 ```
 
-**Ejemplo — Cerrar gripper vía action (0.00375 m por dedo = cerrado):**
+**Ejemplo — Cerrar gripper (0.00375 m por dedo = cerrado):**
 ```bash
 ros2 action send_goal \
   /gripper_trajectory_controller/follow_joint_trajectory \
@@ -456,13 +334,6 @@ ros2 action send_goal \
 
 Estos comandos usan el grupo de planificación del gripper de MoveIt y envían valores
 de apertura en **metros por dedo** (no apertura total).
-
-**Referencia física:**
-
-| Estado  | Valor por dedo (m) | Apertura total (mm) |
-|---------|:------------------:|:-------------------:|
-| Abierto | 0.01955            | 39.1                |
-| Cerrado | 0.00375            | 7.5                 |
 
 ### 6.1 Vía el Tópico `open_gripper` (nodo commander)
 
@@ -577,7 +448,45 @@ archivo SRDF en:
 
 ---
 
-### 7.3 Usar Estados Nombrados vía el Tópico `joint_command` (nodo commander)
+### 7.3 Usar Estados Nombrados vía el Tópico `named_target` (nodo commander)
+
+**Tópico:** `/named_target`
+**Tipo de mensaje:** `std_msgs/msg/String`
+
+Este es el método más directo para llamar un estado nombrado desde la terminal.
+El nodo `commander` recibe el nombre del estado, llama a `setNamedTarget()` en MoveIt
+y ejecuta la trayectoria resultante. El nombre debe coincidir exactamente con uno de
+los definidos en el SRDF (los mismos que aparecen en el desplegable **Goal State** de
+RViz).
+
+**Sintaxis:**
+```bash
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: '<nombre>'}"
+```
+
+**Ejemplo — Estados del brazo:**
+```bash
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'up'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'rest'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'ready_near'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'ready_mid'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'ready_far'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'overRightNearCan'}"
+```
+
+**Comportamiento esperado:** MoveIt planifica una trayectoria articular libre de
+colisiones desde la posición actual hasta la configuración almacenada en el SRDF para
+ese nombre. Si el nombre no existe en el SRDF, MoveIt rechaza el plan y el brazo no
+se mueve (sin crash, solo fallo silencioso en el log).
+
+> **Nota importante:** el nodo `commander` procesa los comandos de forma secuencial y
+> bloqueante. Si se envía un segundo `/named_target` mientras el primero sigue
+> ejecutándose, el segundo mensaje queda en cola y se ejecutará cuando termine el
+> primero. Esperar a que el robot deje de moverse antes de enviar el siguiente comando.
+
+---
+
+### 7.4 Usar Estados Nombrados vía el Tópico `joint_command` (nodo commander)
 
 El nodo `commander` se suscribe a `/joint_command` para mover el brazo a una
 configuración articular específica usando el grupo `arm` de MoveIt.
@@ -637,14 +546,15 @@ ros2 topic pub --once /joint_command \
 ```
 
 **Comportamiento esperado:** El nodo `commander` llama a MoveIt con `setJointValueTarget`,
-planifica usando OMPL y ejecuta. La escala de velocidad y aceleración está al 100%.
+planifica usando OMPL y ejecuta. La escala de velocidad y aceleración está al 30%.
 
 ---
 
-### 7.4 Estados Nombrados vía `ros2 action` al move_group de MoveIt
+### 7.5 Estados Nombrados vía `ros2 action` al move_group de MoveIt
 
 El `move_group` de MoveIt expone una acción `MoveGroup`. Se pueden enviar goals de
-estado nombrado directamente sin el nodo `commander`:
+estado nombrado directamente sin el nodo `commander` especificando los valores
+articulares explícitamente:
 
 ```bash
 ros2 action send_goal /move_action moveit_msgs/action/MoveGroup \
@@ -680,6 +590,7 @@ Establecer `plan_only: true` para solo calcular el plan sin ejecutarlo.
 | `/joint_command`     | Suscrito    | `example_interfaces/msg/Float64MultiArray`             | Nodo `commander`                       |
 | `/open_gripper`      | Suscrito    | `example_interfaces/msg/Bool`                          | Nodo `commander`                       |
 | `/pose_command`      | Suscrito    | `phantomx_pincher_interfaces/msg/PoseCommand`          | Nodo `commander`                       |
+| `/named_target`      | Suscrito    | `std_msgs/msg/String`                                  | Nodo `commander`                       |
 | `/tf`                | Publicado   | `tf2_msgs/msg/TFMessage`                               | `robot_state_publisher`                |
 | `/robot_description` | Publicado   | `std_msgs/msg/String`                                  | `robot_state_publisher`                |
 
@@ -714,15 +625,16 @@ Establecer `plan_only: true` para solo calcular el plan sin ejecutarlo.
 a tópicos de conveniencia y los traduce en solicitudes de movimiento a MoveIt.
 
 **Suscripciones:**
+- `/named_target` (`String`) → llama a `setNamedTarget(msg.data)` en el grupo `arm`
 - `/open_gripper` (`Bool`) → llama a `setNamedTarget("open")` o `setNamedTarget("closed")`
 - `/joint_command` (`Float64MultiArray`, tamaño=4) → llama a `setJointValueTarget`
 - `/pose_command` (`PoseCommand`) → llama a `setPoseTarget` o `computeCartesianPath`
 
 **Configuración de MoveIt:**
-- Escala de velocidad: 1.0 (100%)
-- Escala de aceleración: 1.0 (100%)
-- Tolerancia de posición: 0.01 m
-- Tolerancia de orientación: 0.1 rad
+- Escala de velocidad: 0.3 (30%)
+- Escala de aceleración: 0.3 (30%)
+- Tolerancia de posición: 0.005 m
+- Tolerancia de orientación: 0.05 rad
 - Tiempo de planificación: 5.0 s
 
 ---
@@ -760,16 +672,7 @@ tick = round(t × 520)
 
 ---
 
-### 9.3 `pincher_controller` (`pincher_control` — GUI)
-
-**Ejecutable:** `ros2 run pincher_control control_servo`
-
-**Descripción:** Control directo de Dynamixel con GUI de Tkinter. NO usa MoveIt.
-Publica joint states solo para visualización en RViz.
-
----
-
-### 9.4 `test_moveit` (`phantomx_pincher_commander_cpp`)
+### 9.3 `test_moveit` (`phantomx_pincher_commander_cpp`)
 
 **Ejecutable:** `ros2 run phantomx_pincher_commander_cpp test_moveit`
 
@@ -793,7 +696,18 @@ ros2 launch phantomx_pincher fake.launch.py
 ros2 launch phantomx_pincher_bringup phantomx_pincher.launch.py use_real_robot:=true
 ```
 
-### Mover el Brazo a un Estado Nombrado (vía tópico joint_command)
+### Mover el Brazo a un Estado Nombrado (vía /named_target — RECOMENDADO)
+
+```bash
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'up'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'rest'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'ready_near'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'ready_mid'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'ready_far'}"
+ros2 topic pub --once /named_target std_msgs/msg/String "{data: 'overRightNearCan'}"
+```
+
+### Mover el Brazo a un Estado Nombrado (vía /joint_command — valores explícitos)
 
 ```bash
 # up → todos a cero
@@ -830,28 +744,35 @@ ros2 topic pub --once /pose_command \
   "{x: 0.15, y: 0.0, z: 0.12, roll: 3.14159, pitch: 0.0, yaw: 0.0, cartesian_path: false}"
 ```
 
-### Comando Directo de Motores (ticks, sin MoveIt)
+### Trayectoria Articular Directa (sin MoveIt)
 
 ```bash
-# Mover los 5 motores al centro (512 ticks = 0 rad)
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[1,2,3,4,5] \
-  -p goal_positions:=[512,512,512,512,512] \
-  -p moving_speed:=150 -p delay:=3.0
+# Mover brazo a una posición (valores en radianes)
+ros2 action send_goal \
+  /joint_trajectory_controller/follow_joint_trajectory \
+  control_msgs/action/FollowJointTrajectory \
+  "{trajectory: {
+      joint_names: [phantomx_pincher_arm_shoulder_pan_joint, phantomx_pincher_arm_shoulder_lift_joint, phantomx_pincher_arm_elbow_flex_joint, phantomx_pincher_arm_wrist_flex_joint],
+      points: [{positions: [0.0, 0.0, 0.0, 0.0], time_from_start: {sec: 3, nanosec: 0}}]
+  }}"
 
-# Abrir gripper (520 ticks)
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[5] -p goal_positions:=[520] -p moving_speed:=100 -p delay:=2.0
+# Abrir gripper (0.01955 m)
+ros2 action send_goal \
+  /gripper_trajectory_controller/follow_joint_trajectory \
+  control_msgs/action/FollowJointTrajectory \
+  "{trajectory: {
+      joint_names: [phantomx_pincher_gripper_finger1_joint, phantomx_pincher_gripper_finger2_joint],
+      points: [{positions: [0.01955, 0.01955], time_from_start: {sec: 2, nanosec: 0}}]
+  }}"
 
-# Cerrar gripper (0 ticks)
-ros2 run pincher_control control_servo --ros-args \
-  -p dxl_ids:=[5] -p goal_positions:=[0] -p moving_speed:=100 -p delay:=2.0
-```
-
-### GUI Interactiva (sliders + RViz)
-
-```bash
-ros2 run pincher_control control_servo
+# Cerrar gripper (0.00375 m)
+ros2 action send_goal \
+  /gripper_trajectory_controller/follow_joint_trajectory \
+  control_msgs/action/FollowJointTrajectory \
+  "{trajectory: {
+      joint_names: [phantomx_pincher_gripper_finger1_joint, phantomx_pincher_gripper_finger2_joint],
+      points: [{positions: [0.00375, 0.00375], time_from_start: {sec: 2, nanosec: 0}}]
+  }}"
 ```
 
 ---
