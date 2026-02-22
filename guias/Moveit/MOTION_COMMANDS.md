@@ -624,20 +624,19 @@ articulares explícitamente:
 ros2 action send_goal /move_action moveit_msgs/action/MoveGroup \
   "{request: {
      group_name: 'arm',
-     motion_plan_request: {
-       start_state: {is_diff: true},
-       goal_constraints: [{
-         name: 'rest',
-         joint_constraints: [
-           {joint_name: 'phantomx_pincher_arm_shoulder_pan_joint',  position: 0.0,     tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0},
-           {joint_name: 'phantomx_pincher_arm_shoulder_lift_joint', position: -1.5708, tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0},
-           {joint_name: 'phantomx_pincher_arm_elbow_flex_joint',    position: 2.2689,  tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0},
-           {joint_name: 'phantomx_pincher_arm_wrist_flex_joint',    position: 1.5708,  tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0}
-         ]
-       }]
-     },
-     planning_options: {plan_only: false, look_around: false, replan: false}
-  }}"
+     start_state: {is_diff: true},
+     goal_constraints: [{
+       name: 'rest',
+       joint_constraints: [
+         {joint_name: 'phantomx_pincher_arm_shoulder_pan_joint',  position: 0.0,     tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0},
+         {joint_name: 'phantomx_pincher_arm_shoulder_lift_joint', position: -1.5708, tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0},
+         {joint_name: 'phantomx_pincher_arm_elbow_flex_joint',    position: 2.2689,  tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0},
+         {joint_name: 'phantomx_pincher_arm_wrist_flex_joint',    position: 1.5708,  tolerance_above: 0.01, tolerance_below: 0.01, weight: 1.0}
+       ]
+     }]
+   },
+   planning_options: {plan_only: false, look_around: false, replan: false}
+  }"
 ```
 
 Establecer `plan_only: true` para solo calcular el plan sin ejecutarlo.
