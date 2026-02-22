@@ -18,6 +18,7 @@
 8. [Todos los Tópicos, Servicios y Acciones](#8-todos-los-tópicos-servicios-y-acciones)
 9. [Referencia de Nodos](#9-referencia-de-nodos)
 10. [Tarjeta de Referencia Rápida](#10-tarjeta-de-referencia-rápida)
+11. [Consultar el Estado del Robot](#11-consultar-el-estado-del-robot)
 
 ---
 
@@ -239,11 +240,11 @@ ros2 topic pub --once /pose_command \
   "{x: 0.15, y: 0.0, z: 0.10, roll: 3.14159, pitch: 0.0, yaw: 0.0, cartesian_path: false}"
 ```
 
-**Ejemplo — Trayectoria Cartesiana en línea recta hasta la misma pose:**
+**Ejemplo — Trayectoria Cartesiana en línea recta hasta casi la misma pose:**
 ```bash
 ros2 topic pub --once /pose_command \
   phantomx_pincher_interfaces/msg/PoseCommand \
-  "{x: 0.15, y: 0.0, z: 0.10, roll: 3.14159, pitch: 0.0, yaw: 0.0, cartesian_path: true}"
+  "{x: 0.15, y: 0.0, z: 0.105, roll: 3.14159, pitch: 0.0, yaw: 0.0, cartesian_path: true}"
 ```
 
 **Comportamiento esperado (cartesian_path: false):** MoveIt usa OMPL para encontrar
@@ -256,7 +257,70 @@ alcanzable. Útil para movimientos de aproximación precisos en pick-and-place.
 
 ---
 
-### 4.2 Vía el Panel de Motion Planning de RViz (Marcador Interactivo)
+### 4.2 Poses Cartesianas Equivalentes a los Estados Nombrados
+
+Las siguientes poses fueron medidas con `tf2_echo` mientras el robot se encontraba en
+cada estado nombrado. Permiten mover el efector final a la misma posición usando
+Modalidad 2 en lugar de Modalidad 5, con planificación IK de MoveIt.
+
+> **Nota:** `ready_far` no ha sido medido aún. La pose de `overRightNearCan` muestra
+> y=0.000, lo que es sospechoso dado que shoulder_pan=-1.5708 debería producir
+> desplazamiento en Y — verificar con una nueva medición antes de usarla.
+
+| Estado             | x (m)  | y (m) | z (m) | roll (rad) | pitch (rad) | yaw (rad) |
+|--------------------|:------:|:-----:|:-----:|:----------:|:-----------:|:---------:|
+| `up`               | 0.000  | 0.000 | 0.406 |  0.000     | 0.000       | -3.142    |
+| `rest`             | 0.028  | 0.000 | 0.147 |  3.142     | -0.873      | 0.000     |
+| `ready_near`       | 0.100  | 0.000 | 0.140 |  3.142     | 0.000       | 0.000     |
+| `ready_mid`        | 0.128  | 0.000 | 0.100 |  3.142     | 0.000       | 0.000     |
+| `ready_far`        | —      | —     | —     | —          | —           | —         |
+| `overRightNearCan` | 0.000  | -0.132| 0.114 |  3.142     | 0.017       | -1.571    |
+
+\* Medición pendiente de verificación.
+
+**Equivalente a `up`:**
+```bash
+ros2 topic pub --once /pose_command \
+  phantomx_pincher_interfaces/msg/PoseCommand \
+  "{x: 0.0, y: 0.0, z: 0.406, roll: 0.0, pitch: 0.0, yaw: -3.14159, cartesian_path: false}"
+```
+
+**Equivalente a `rest`:**
+```bash
+ros2 topic pub --once /pose_command \
+  phantomx_pincher_interfaces/msg/PoseCommand \
+  "{x: 0.028, y: 0.0, z: 0.147, roll: 3.14159, pitch: -0.873, yaw: 0.0, cartesian_path: false}"
+```
+
+**Equivalente a `ready_near`:**
+```bash
+ros2 topic pub --once /pose_command \
+  phantomx_pincher_interfaces/msg/PoseCommand \
+  "{x: 0.100, y: 0.0, z: 0.140, roll: 3.14159, pitch: 0.0, yaw: 0.0, cartesian_path: false}"
+```
+
+**Equivalente a `ready_mid`:**
+```bash
+ros2 topic pub --once /pose_command \
+  phantomx_pincher_interfaces/msg/PoseCommand \
+  "{x: 0.128, y: 0.0, z: 0.100, roll: 3.14159, pitch: 0.0, yaw: 0.0, cartesian_path: false}"
+```
+
+**Equivalente a `overRightNearCan` (verificar pose primero):**
+```bash
+ros2 topic pub --once /pose_command \
+  phantomx_pincher_interfaces/msg/PoseCommand \
+  "{x: 0.000, y: -0.132, z: 0.114, roll: 3.14159, pitch: 0.017, yaw: -1.571, cartesian_path: false}"
+```
+
+> **Diferencia respecto a `/named_target`:** Con `/pose_command` MoveIt usa IK para
+> encontrar *cualquier* configuración articular que alcance esa pose — puede diferir de
+> la configuración exacta del estado nombrado. Usar `/named_target` si se necesita
+> reproducir la postura exacta.
+
+---
+
+### 4.3 Vía el Panel de Motion Planning de RViz (Marcador Interactivo)
 
 1. Abrir RViz (iniciado por cualquier comando de lanzamiento del §2).
 2. En el panel **Motion Planning**, usar el marcador interactivo (esfera/flecha naranja)
@@ -773,6 +837,110 @@ ros2 action send_goal \
       joint_names: [phantomx_pincher_gripper_finger1_joint, phantomx_pincher_gripper_finger2_joint],
       points: [{positions: [0.00375, 0.00375], time_from_start: {sec: 2, nanosec: 0}}]
   }}"
+```
+
+---
+
+## 11. Consultar el Estado del Robot
+
+Esta sección muestra cómo obtener información del estado actual del robot desde la
+terminal: posiciones de los motores, posición del efector final, ángulos RPY, etc.
+
+**Prerrequisito:** El stack completo debe estar ejecutándose (cualquier lanzamiento del §2).
+
+---
+
+### 11.1 Posición Actual de los Motores (Joint States)
+
+El tópico `/joint_states` publica continuamente las posiciones reales de todos los
+joints en **radianes** (brazo) y **metros** (gripper).
+
+```bash
+ros2 topic echo /joint_states
+```
+
+**Salida esperada:**
+```
+name: [phantomx_pincher_arm_shoulder_pan_joint, phantomx_pincher_arm_shoulder_lift_joint,
+       phantomx_pincher_arm_elbow_flex_joint,   phantomx_pincher_arm_wrist_flex_joint,
+       phantomx_pincher_gripper_finger1_joint,  phantomx_pincher_gripper_finger2_joint]
+position: [0.0, 0.0, 1.5708, 1.5708, 0.01955, 0.01955]
+velocity: [...]
+effort:   [...]
+```
+
+Para ver solo una muestra (sin loop):
+```bash
+ros2 topic echo --once /joint_states
+```
+
+---
+
+### 11.2 Posición y Orientación del Efector Final (TF)
+
+El árbol TF permite obtener la posición (x, y, z) y orientación (roll, pitch, yaw)
+de cualquier frame del robot respecto a cualquier otro, en tiempo real.
+
+**Posición del efector final respecto a la base:**
+```bash
+ros2 run tf2_ros tf2_echo phantomx_pincher_base_link phantomx_pincher_end_effector
+```
+
+**Salida esperada:**
+```
+At time 1234567890.123
+- Translation: [x: 0.152, y: 0.000, z: 0.095]
+- Rotation: in Quaternion [x: 0.000, y: 0.707, z: 0.000, w: 0.707]
+- Rotation: in RPY (radian) [roll: 0.000, pitch: 1.571, yaw: 0.000]
+- Rotation: in RPY (degree) [roll: 0.000, pitch: 90.000, yaw: 0.000]
+```
+
+La salida incluye tanto cuaternión como ángulos RPY en radianes y grados.
+
+---
+
+### 11.3 Frames TF Disponibles del Robot
+
+Los frames principales del árbol TF son:
+
+| Frame                                        | Descripción                     |
+|----------------------------------------------|---------------------------------|
+| `phantomx_pincher_base_link`                 | Base del robot (frame raíz)     |
+| `phantomx_pincher_arm_shoulder_pan_link`     | Shoulder pan                    |
+| `phantomx_pincher_arm_shoulder_lift_link`    | Shoulder lift                   |
+| `phantomx_pincher_arm_elbow_flex_link`       | Codo                            |
+| `phantomx_pincher_arm_wrist_flex_link`       | Muñeca                          |
+| `phantomx_pincher_end_effector`              | Efector final (punta del brazo) |
+| `phantomx_pincher_gripper_finger1_link`      | Dedo 1 del gripper              |
+| `phantomx_pincher_gripper_finger2_link`      | Dedo 2 del gripper              |
+
+Sintaxis general:
+```bash
+ros2 run tf2_ros tf2_echo <frame_padre> <frame_hijo>
+```
+
+**Ejemplo — Posición del codo respecto a la base:**
+```bash
+ros2 run tf2_ros tf2_echo phantomx_pincher_base_link phantomx_pincher_arm_elbow_flex_link
+```
+
+**Ejemplo — Posición de la muñeca respecto a la base:**
+```bash
+ros2 run tf2_ros tf2_echo phantomx_pincher_base_link phantomx_pincher_arm_wrist_flex_link
+```
+
+---
+
+### 11.4 Ver el Árbol TF Completo
+
+Genera un PDF con el árbol TF completo del robot en el directorio actual:
+```bash
+ros2 run tf2_tools view_frames
+```
+
+Lista todos los frames activos en tiempo real:
+```bash
+ros2 run tf2_ros tf2_monitor
 ```
 
 ---
