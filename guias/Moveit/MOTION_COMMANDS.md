@@ -75,12 +75,6 @@ Ambos joints del dedo comparten el mismo servo físico (ID 5).
 Lanza MoveIt con hardware falso de ros2_control y RViz:
 
 ```bash
-ros2 launch phantomx_pincher fake.launch.py
-```
-
-O equivalentemente:
-
-```bash
 ros2 launch phantomx_pincher_moveit_config move_group.launch.py \
   ros2_control:=true \
   ros2_control_plugin:=fake
@@ -752,9 +746,6 @@ tick = round(t × 520)
 ### Lanzar el Stack
 
 ```bash
-# Simulación (recomendado para pruebas)
-ros2 launch phantomx_pincher fake.launch.py
-
 # Robot real
 ros2 launch phantomx_pincher_bringup phantomx_pincher.launch.py use_real_robot:=true
 ```
