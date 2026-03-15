@@ -31,44 +31,91 @@
   <!-- ============================= -->
   <link name="baseFija_link">
     <visual>
-      <origin xyz="0.155 0 0.000" rpy="0 0 -${PI/2}" />
+      <origin xyz="0 0 0.009" rpy="-${PI/2} 0 -${PI/2}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/baseElementosFijos.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleBase.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="black" />
+      <material name="gray" />
     </visual>
-    <collision>
-      <origin xyz="0.155 0 0.0045" rpy="0 0 -${PI/2}" />
+    <collision> <!-- base -->
+      <origin xyz="0.155 0.0 0.0045" rpy="0 0 -${PI/2}" />
       <geometry>
         <box size="0.360 0.554 0.009" />
+      	<material name="gray" />
       </geometry>
-      <material name="black" />
+    </collision>
+    <collision>
+      <origin xyz="-0.112 0 0.03425" rpy="-${PI/2} 0 ${PI/2}" />
+      <geometry> <!--manijaTrasera-->
+        <box size="0.136 0.0505 0.020" />
+      	<material name="gray" />
+      </geometry>
+    </collision>
+
+    <collision>
+      <origin xyz="0.422 0 0.03425" rpy="-${PI/2} 0 ${PI/2}" />
+      <geometry> <!-- manijaDelantera -->
+        <box size="0.136 0.0505 0.020" />
+      	<material name="gray" />
+      </geometry>
+    </collision>
+
+    <collision>
+      <origin xyz="0.418 0.143625 0.024" rpy="0 0 0" />
+      <geometry> <!-- pata Delantera izquierda -->
+        <box size="0.028 0.05175 0.030" />
+      	<material name="gray" />
+      </geometry>
+    </collision>
+    
+    <collision>
+      <origin xyz="0.418 -0.143625 0.024" rpy="0 0 0" />
+      <geometry> <!-- pata Delantera derecha -->
+        <box size="0.028 0.05175 0.030" />
+      	<material name="gray" />
+      </geometry>
+    </collision>
+
+    <collision>
+      <origin xyz="-0.112 0.143625 0.024" rpy="0 0 0" />
+      <geometry> <!-- pata trasera izquierda -->
+        <box size="0.028 0.05175 0.030" />
+      	<material name="gray" />
+      </geometry>
+    </collision>
+    
+    <collision>
+      <origin xyz="-0.112 -0.143625 0.024" rpy="0 0 0" />
+      <geometry> <!-- pata trasera derecha -->
+        <box size="0.028 0.05175 0.030" />
+      	<material name="gray" />
+      </geometry>
     </collision>
   </link>
 
   <link name="caseBaseRobot_link">
     <visual>
-      <origin xyz="0 0 0" rpy="${PI} 0 ${PI/2}" />
+      <origin xyz="0.0 0.0 0.0" rpy="${PI/2} 0 ${PI/2}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/caseBaseRobot.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleBaseBrazo.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="gray" />
+      <material name="black" />
     </visual>
     <collision>
-        <origin xyz="0 0 -0.024" rpy="${PI} 0 ${PI/2}" />
+        <origin xyz="-0.01325 0.0 -${0.024 - 0.005}" rpy="${PI} 0 ${PI/2}" />
         <geometry>
             <box size="0.066 0.074 0.048" />
         </geometry>
-        <material name="gray" />
+        <material name="black" />
     </collision>
   </link>
 
   <joint name="base_caseRobot_joint" type="fixed">
     <parent link="baseFija_link" />
     <child link="caseBaseRobot_link" />
-    <origin xyz="-0.01325 0 0.054" rpy="0 0 0" />
+    <origin xyz="0.0 0.0 ${0.048+0.004}" rpy="0 0 0" />
   </joint>
 
   <link name="zonaRecoleccion_link">
@@ -97,19 +144,19 @@
 
   <link name="airpump_link">
     <visual>
-      <origin xyz="0 0 0" rpy="${PI/2} 0 -${PI/2}" />
+      <origin xyz="0 0 0" rpy="0 0 -${PI/2}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/ensambleAirpump.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleAirpump.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="gray" />
+      <material name="black" />
     </visual>
     <collision>
-      <origin xyz="-0.0647 0 0.014" rpy="${PI/2} 0 -${PI/2}" />
+      <origin xyz="-0.0647 0.0 0.014" rpy="${PI/2} 0 -${PI/2}" />
       <geometry>
         <box size="0.062 0.0405 0.067" />
       </geometry>
-      <material name="gray" />
+      <material name="black" />
     </collision>
   </link>
 
@@ -117,54 +164,6 @@
     <parent link="baseFija_link" />
     <child link="airpump_link" />
     <origin xyz="0 0 0.009" rpy="0 0 0" />
-  </joint>
-
-  <link name="manijaTrasera_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-${PI/2} 0 ${PI/2}" />
-      <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/manija.stl"
-              scale="0.001 0.001 0.001" />
-      </geometry>
-      <material name="gray" />
-    </visual>
-    <collision>
-      <origin xyz="-0.010 0 0" rpy="-${PI/2} 0 ${PI/2}" />
-      <geometry>
-        <box size="0.136 0.0505 0.020" />
-      </geometry>
-      <material name="gray" />
-    </collision>
-  </link>
-
-  <joint name="base_manijaTrasera_joint" type="fixed">
-    <parent link="baseFija_link" />
-    <child link="manijaTrasera_link" />
-    <origin xyz="-0.102 0 0.03425" rpy="0 0 0" />
-  </joint>
-
-  <link name="manijaDelantera_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="-${PI/2} 0 ${PI/2}" />
-      <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/manija.stl"
-              scale="0.001 0.001 0.001" />
-      </geometry>
-      <material name="gray" />
-    </visual>
-    <collision>
-      <origin xyz="-0.010 0 0" rpy="-${PI/2} 0 ${PI/2}" />
-      <geometry>
-        <box size="0.136 0.0505 0.020" />
-      </geometry>
-      <material name="gray" />
-    </collision>
-  </link>
-
-  <joint name="base_manijaDelantera_joint" type="fixed">
-    <parent link="baseFija_link" />
-    <child link="manijaDelantera_link" />
-    <origin xyz="0.432 0 0.03425" rpy="0 0 0" />
   </joint>
 
   <link name="canecaLateralIzquierda_link">
@@ -210,6 +209,7 @@
       <material name="yellow" />
     </collision>
   </link>
+  
   <joint name="base_canecaLateralDerecha_joint" type="fixed">
     <parent link="baseFija_link" />
     <child link="canecaLateralDerecha_link" />
@@ -262,13 +262,11 @@
 
   </link>
 
-
   <joint name="base_canecaFrontalIzquierda_joint" type="fixed">
     <parent link="baseFija_link" />
     <child link="canecaFrontalIzquierda_link" />
     <origin xyz="0.19397558339 0.09252160722 0.016" rpy="0 0 0" />
   </joint>
-
 
   <!-- ============================= -->
   <!-- 🌍 Global Rotation Wrapper -->
@@ -287,6 +285,8 @@ Frontal	0 -${PI/2} 0
 Trasera	0 ${PI/2} 0
 Lateral derecha	0 0 -${PI/2}
 Lateral izquierda	0 0 ${PI/2}
+sudo apt install ros-jazzy-urdf-tutorial
+ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/kit.xacro
   -->
 
 </robot>
