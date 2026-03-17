@@ -24,7 +24,7 @@
   <material name="red"><color rgba="1 0 0 1"/></material>
   <material name="blue"><color rgba="0 0 1 1"/></material>
   <material name="purple"><color rgba="0.5 0 0.5 1"/></material>
-
+  <material name="orange"><color rgba="1.0 0.5 0.0 1"/></material>
 
   <!-- ============================= -->
   <!-- 🧱 Robot Geometry -->
@@ -42,14 +42,12 @@
       <origin xyz="0.155 0.0 0.0045" rpy="0 0 -${PI/2}" />
       <geometry>
         <box size="0.360 0.554 0.009" />
-      	<material name="gray" />
       </geometry>
     </collision>
     <collision>
       <origin xyz="-0.112 0 0.03425" rpy="-${PI/2} 0 ${PI/2}" />
       <geometry> <!--manijaTrasera-->
         <box size="0.136 0.0505 0.020" />
-      	<material name="gray" />
       </geometry>
     </collision>
 
@@ -57,7 +55,6 @@
       <origin xyz="0.422 0 0.03425" rpy="-${PI/2} 0 ${PI/2}" />
       <geometry> <!-- manijaDelantera -->
         <box size="0.136 0.0505 0.020" />
-      	<material name="gray" />
       </geometry>
     </collision>
 
@@ -65,7 +62,6 @@
       <origin xyz="0.418 0.143625 0.024" rpy="0 0 0" />
       <geometry> <!-- pata Delantera izquierda -->
         <box size="0.028 0.05175 0.030" />
-      	<material name="gray" />
       </geometry>
     </collision>
     
@@ -73,26 +69,63 @@
       <origin xyz="0.418 -0.143625 0.024" rpy="0 0 0" />
       <geometry> <!-- pata Delantera derecha -->
         <box size="0.028 0.05175 0.030" />
-      	<material name="gray" />
       </geometry>
     </collision>
 
     <collision>
-      <origin xyz="-0.112 0.143625 0.024" rpy="0 0 0" />
+      <origin xyz="-${0.112 - 0.004} 0.143625 0.024" rpy="0 0 0" />
       <geometry> <!-- pata trasera izquierda -->
         <box size="0.028 0.05175 0.030" />
-      	<material name="gray" />
       </geometry>
     </collision>
     
     <collision>
-      <origin xyz="-0.112 -0.143625 0.024" rpy="0 0 0" />
+      <origin xyz="-${0.112 - 0.004} -0.143625 0.024" rpy="0 0 0" />
       <geometry> <!-- pata trasera derecha -->
         <box size="0.028 0.05175 0.030" />
-      	<material name="gray" />
       </geometry>
     </collision>
   </link>
+
+  <link name="soporteCamara_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="-${PI/2} 0 -${PI/2}" />
+      <geometry>
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleSoporteC270Webcam.dae"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="purple" />
+    </visual>
+    <collision> <!-- mastil -->
+        <origin xyz="0.0 0.0 ${0.353 - 0.005}" rpy="0 0 0" />
+        <geometry>
+            <box size="0.040 0.062 0.706" />
+        </geometry>
+        <material name="purple" />
+    </collision>
+
+    <collision> <!-- acople Camara -->
+        <origin xyz="-${0.088 - 0.02} 0.0 ${0.706 - 0.02}" rpy="0 0 0" />
+        <geometry>
+            <box size="0.176 0.062 0.04" />
+        </geometry>
+        <material name="purple" />
+    </collision>
+    
+    <collision> <!-- Camara -->
+        <origin xyz="-${0.176 - 0.030} -0.0165 ${0.706 - 0.038}" rpy="0 0 0" />
+        <geometry>
+            <box size="0.040 0.072 0.076" />
+        </geometry>
+        <material name="purple" />
+    </collision>
+  </link>
+
+  <joint name="base_soporteCamara_joint" type="fixed">
+    <parent link="baseFija_link" />
+    <child link="soporteCamara_link" />
+    <origin xyz="0.26025 0.0 ${0.005 + 0.009}" rpy="0 0 0" />
+  </joint>
 
   <link name="caseBaseRobot_link">
     <visual>
@@ -103,10 +136,17 @@
       </geometry>
       <material name="black" />
     </visual>
-    <collision>
+    <collision> <!-- base brazo -->
         <origin xyz="-0.01325 0.0 -${0.024 - 0.005}" rpy="${PI} 0 ${PI/2}" />
         <geometry>
             <box size="0.066 0.074 0.048" />
+        </geometry>
+        <material name="black" />(0.048-0.03258)
+    </collision>
+    <collision> <!-- Placa numero -->
+        <origin xyz="0.020 0.0 -0.010" rpy="0 -${PI * (17/180)} 0" />
+        <geometry>
+            <box size="0.005 0.022 0.030" />
         </geometry>
         <material name="black" />
     </collision>
@@ -151,12 +191,19 @@
       </geometry>
       <material name="black" />
     </visual>
-    <collision>
+    
+    <collision> <!-- carcasa arimpump -->
       <origin xyz="-0.0647 0.0 0.014" rpy="${PI/2} 0 -${PI/2}" />
       <geometry>
         <box size="0.062 0.0405 0.067" />
       </geometry>
-      <material name="black" />
+    </collision>
+    
+    <collision> <!-- Placa numero -->
+        <origin xyz="-0.0747 0.0 ${0.0325}" rpy="0 0 0" />
+        <geometry>
+            <box size="0.030 0.022 0.005" />
+        </geometry>
     </collision>
   </link>
 
@@ -168,9 +215,9 @@
 
   <link name="canecaLateralIzquierda_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 -${PI/2}" />
+      <origin xyz="0 0 0.003" rpy="-${PI/2} 0 -${PI/2}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/canecaRojo.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
       <material name="red" />
@@ -180,22 +227,21 @@
       <geometry>
         <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
               scale="0.001 0.001 0.001" />
-      </geometry>
-      <material name="red" />        
+      </geometry>       
     </collision>
   </link>
+  
   <joint name="base_canecaLateralIzquierda_joint" type="fixed">
     <parent link="baseFija_link" />
     <child link="canecaLateralIzquierda_link" />
     <origin xyz="-0.0135 0.12775 0.016" rpy="0 0 0" />
   </joint>
 
-
   <link name="canecaLateralDerecha_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${PI/2}" />
+      <origin xyz="0 0 0.003" rpy="-${PI/2} 0 ${PI/2}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/canecaAmarilla.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
       <material name="yellow" />
@@ -206,7 +252,6 @@
         <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="yellow" />
     </collision>
   </link>
   
@@ -218,12 +263,12 @@
 
   <link name="canecaFrontalDerecha_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${PI*((180-25.5)/180)}" />
+      <origin xyz="0 0 0.003" rpy="-${PI/2} 0 ${PI*((180-25.5)/180)}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/canecaAzul.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="green" />
+      <material name="blue" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 ${PI*((180-25.5)/180)}" />
@@ -231,7 +276,6 @@
         <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="green" />
     </collision>
   </link>
 
@@ -241,14 +285,14 @@
     <origin xyz="0.19397558339 -0.09252160722 0.016" rpy="0 0 0" />
   </joint>
 
-  <link name="canecaFrontalIzquierda_link">
+  <link name="canecaFrontalIzquierda_link"> <!-- caneca azul -0.05 -0.074 0.003 0.20724702645 0.18083847310-->
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${PI*(25.5/180) + PI}" />
+      <origin xyz="0 0 0.003" rpy="-${PI/2} 0 ${PI*(25.5/180) + PI}" />
       <geometry>
-        <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/canecaVerde.dae"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="blue" />
+      <material name="green" />
     </visual>
 
     <collision>
@@ -257,7 +301,6 @@
         <mesh filename="package://phantomx_pincher_description/meshes/STL/canecaGrande.stl"
               scale="0.001 0.001 0.001" />
       </geometry>
-      <material name="blue" />
     </collision>
 
   </link>
@@ -266,6 +309,127 @@
     <parent link="baseFija_link" />
     <child link="canecaFrontalIzquierda_link" />
     <origin xyz="0.19397558339 0.09252160722 0.016" rpy="0 0 0" />
+  </joint>
+
+  <link name="raspberry_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="-${PI/2} 0 ${PI}" />
+      <geometry>
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleRaspberrypi.dae"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="orange" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.134 0.075 0.068" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_raspberry_joint" type="fixed">
+    <parent link="baseFija_link" />
+    <child link="raspberry_link" />
+    <origin xyz="0.330 0.1425 ${0.0345 + 0.009}" rpy="0 0 0" />
+  </joint>
+  
+
+  <link name="canastilla_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://phantomx_pincher_description/meshes/STL/canastilla.stl"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="blue" />
+    </visual>
+    <collision><!-- pared larga izquierda-->
+      <origin xyz="0 0.1915 ${0.190 / 2}" rpy="0 0 0" />
+      <geometry>
+        <box size="0.600 0.017 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- pared larga derecha-->
+      <origin xyz="0 -0.1915 ${0.190 / 2}" rpy="0 0 0" />
+      <geometry>
+        <box size="0.600 0.017 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- pared corta delantera-->
+      <origin xyz="0.2915 0.0 ${0.190 / 2}" rpy="0 0 0" />
+      <geometry>
+        <box size="0.017 0.366 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- pared corta trasera-->
+      <origin xyz="-0.2915 0.0 ${0.190 / 2}" rpy="0 0 0" />
+      <geometry>
+        <box size="0.017 0.366 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- esquina rotada trasera izquierda -->
+      <origin xyz="-0.283 0.183 ${0.190 / 2}" rpy="0 0 ${PI/4}" />
+      <geometry>
+        <box size="0.018 0.018 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- esquina rotada trasera derecha -->
+      <origin xyz="-0.283 -0.183 ${0.190 / 2}" rpy="0 0 ${PI/4}" />
+      <geometry>
+        <box size="0.018 0.018 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- esquina rotada delantera izquierda -->
+      <origin xyz="0.283 0.183 ${0.190 / 2}" rpy="0 0 ${PI/4}" />
+      <geometry>
+        <box size="0.018 0.018 0.190" />
+      </geometry>
+    </collision>
+    <collision><!-- esquina rotada delantera derecha -->
+      <origin xyz="0.283 -0.183 ${0.190 / 2}" rpy="0 0 ${PI/4}" />
+      <geometry>
+        <box size="0.018 0.018 0.190" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_canastilla_joint" type="fixed">
+    <parent link="baseFija_link" />
+    <child link="canastilla_link" />
+    <origin xyz="0.154 0 -${0.011 + 0.0145}" rpy="0 0 0" />
+  </joint>
+
+  <link name="electronics_link">
+    <visual> <!-- Multitoma-->
+      <origin xyz="0.28225 -0.1515 ${0.0275 + 0.009}" rpy="0 0 ${PI/2}" />
+      <geometry>
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleMultitoma.dae"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="yellow" />
+    </visual>
+
+    <visual> <!-- Arbotix -->
+      <origin xyz="0.34796868605 0.11930139262 ${0.04542796419 + 0.009}" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://phantomx_pincher_description/meshes/DAE/ensambleArbotix.dae"
+              scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    
+    <collision> <!-- bloque completo de electronica -->
+      <origin xyz="${0.346 - 0.000125} -0.0375 ${(0.151 / 2) + 0.009}" rpy="0 0 0" />
+      <geometry>
+        <box size="${0.125 + 0.00325+0.0035 } ${0.250 + 0.0245 + 0.0105} 0.151" />
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="base_electronics_joint" type="fixed">
+    <parent link="baseFija_link" />
+    <child link="electronics_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
   </joint>
 
   <!-- ============================= -->
@@ -281,12 +445,14 @@
   <!-- 
 Superior (normal)	0 0 0
 Inferior (desde abajo)	${PI} 0 0
-Frontal	0 -${PI/2} 0
-Trasera	0 ${PI/2} 0
-Lateral derecha	0 0 -${PI/2}
-Lateral izquierda	0 0 ${PI/2}
+Frontal			0 -${PI/2} 0
+Trasera			0 ${PI/2} 0
+Lateral derecha		-${PI/2} 0 0
+Lateral izquierda	${PI/2} 0 0
 sudo apt install ros-jazzy-urdf-tutorial
 ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/kit.xacro
+
+ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/kit.xacro ; pkill -f rviz2 ; pkill -f robot_state_publisher ; pkill -f joint_state_publisher
   -->
 
 </robot>
