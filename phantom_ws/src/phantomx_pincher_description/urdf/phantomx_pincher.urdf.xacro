@@ -1,87 +1,148 @@
 <?xml version="1.0"?>
-<!-- URDF for PhantomX Pincher Robot Arm -->
+<!-- ============================================================== -->
+<!-- Archivo raíz del modelo URDF del brazo PhantomX Pincher.       -->
+<!-- Este es el punto de entrada principal: ensambla todos los      -->
+<!-- submódulos (plataforma KIT, brazo, montaje) en un único        -->
+<!-- modelo URDF listo para ser cargado por robot_state_publisher.  -->
+<!-- ============================================================== -->
 <robot xmlns:xacro="http://wiki.ros.org/xacro" name="phantomx_pincher">
 
-  <!--                   -->
-  <!-- Imported elements -->
-  <!--                   -->
+  <!-- ============================================================ -->
+  <!-- Archivos importados                                          -->
+  <!-- Cada include carga un conjunto de macros. El orden importa:  -->
+  <!-- los macros deben estar definidos antes de ser llamados.      -->
+  <!-- ============================================================ -->
+
+  <!-- Macros utilitarios genéricos (phantomx_pincher_link, _joint,
+       _dummy_link, _virtual_link). Base de todo el modelo. -->
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher_utils.xacro"/>
+
+  <!-- Plataforma KIT: base, cámara, canecas, electrónica, etc.
+       Define world_link como raíz de la plataforma. -->
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/kit.xacro"/>
+
+  <!-- Macro del brazo robótico completo (phantomx_pincher).
+       Define todos los joints y links desde el hombro hasta el gripper. -->
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher_arm.xacro"/>
+
+  <!-- Macros de montaje alternativos (soporte base y tablero de tareas).
+       Comentado porque en este proyecto el brazo se monta directamente
+       sobre la plataforma KIT, sin necesitar soporte independiente. -->
   <!--
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher_mounting.xacro"/>
   -->
+
+  <!-- Plugin de Ignition Gazebo para ros2_control.
+       Incluido aunque esté comentado su uso, por si se activa
+       la simulación en Gazebo en el futuro. -->
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher.gazebo"/>
 
-  <!--            -->
-  <!-- Parameters -->
-  <!--            -->
 
-  <!-- Name of the robot (mandatory) -->
+  <!-- ============================================================ -->
+  <!-- Argumentos de entrada (xacro:arg)                           -->
+  <!-- Permiten personalizar el modelo al cargarlo sin editar       -->
+  <!-- el archivo. Se pasan por línea de comandos o launch file:    -->
+  <!--   ros2 launch ... name:=mi_robot collision:=false ...        -->
+  <!-- ============================================================ -->
+
+  <!-- Nombre del robot. Se usa como prefijo base para todos los
+       links y joints si no se especifica prefix explícitamente. -->
   <xacro:arg name="name" default="phantomx_pincher"/>
 
-  <!-- Prefix for all entities -->
+  <!-- Prefijo para todos los links y joints del modelo.
+       Por defecto es el nombre del robot seguido de '_'.
+       Permite instanciar múltiples robots en el mismo entorno
+       sin conflictos de nombres (ej. robot1_, robot2_). -->
   <xacro:arg name="prefix" default="$(arg name)_"/>
 
-  <!-- Flag to enable collision geometry -->
+  <!-- Activa o desactiva la geometría de colisión en todos los links.
+       Desactivarla (false) reduce la carga computacional en simulación
+       cuando no se necesita detección de colisiones. -->
   <xacro:arg name="collision" default="true"/>
 
-  <!-- Flag to enable ros2 controllers for manipulator -->
+  <!-- Activa o desactiva el bloque ros2_control en el modelo.
+       Si es false, el robot no expondrá interfaces de control
+       (útil para visualización pura en RViz sin controladores). -->
   <xacro:arg name="ros2_control" default="true"/>
 
-  <!-- The ros2_control plugin that should be loaded for the manipulator ('fake', 'ign', 'real' or custom) -->
+  <!-- Tipo de plugin de hardware para ros2_control:
+       'fake' → simulación en memoria (sin robot ni Gazebo)
+       'ign'  → simulación con Ignition/Gazebo
+       'real' → robot físico (no implementado aún) -->
   <xacro:arg name="ros2_control_plugin" default="fake"/>
 
-  <!-- The output control command interface provided by ros2_control
-       ('position', 'velocity', 'effort' or combinations like 'position,velocity') -->
+  <!-- Interfaz de comando que expone ros2_control a los controladores.
+       Valores posibles: 'position', 'velocity', 'effort' o
+       combinaciones como 'position,velocity'. -->
   <xacro:arg name="ros2_control_command_interface" default="position"/>
 
-  <!-- The filepath to parameters of ROS 2 controllers -->
+  <!-- Ruta al archivo YAML de parámetros de los controladores ROS2.
+       Por defecto apunta al archivo del paquete moveit_config
+       correspondiente a la interfaz de comando seleccionada.
+       Solo se usa cuando el plugin es 'ign' (Gazebo). -->
   <xacro:arg name="ros2_controller_parameters"
              default="$(find phantomx_pincher_moveit_config)/config/controllers_$(arg ros2_control_command_interface).yaml"/>
 
-  <!-- Flag to enable mimicking of the finger joints -->
+  <!-- Activa el modo mimic en el dedo 2 del gripper.
+       true  → el dedo 2 copia el movimiento del dedo 1 (simulación)
+       false → ambos dedos son articulaciones independientes (robot real) -->
   <xacro:arg name="mimic_finger_joints" default="false"/>
 
-  <!-- Flag to preserve fixed joints and prevent lumping when generating SDF for Gazebo -->
+  <!-- Evita que Gazebo fusione los joints fijos con sus links padre
+       al convertir el URDF a SDF. Necesario cuando se quiere que
+       links con joints fijos sean entidades independientes en Gazebo. -->
   <xacro:arg name="gazebo_preserve_fixed_joint" default="false"/>
 
-  <!--            -->
-  <!-- Properties -->
-  <!--            -->
+
+  <!-- ============================================================ -->
+  <!-- Propiedades internas                                         -->
+  <!-- ============================================================ -->
+
+  <!-- Nombre del link base del brazo. Se usa para construir el
+       nombre completo con prefijo: $(arg prefix)base_link. -->
   <xacro:property name="base_link" value="base_link"/>
 
-  <!--       -->
-  <!-- Robot -->
-  <!--       -->
 
-  <!-- Base link that can be used for fixing the robot to the world -->
+  <!-- ============================================================ -->
+  <!-- Ensamblaje del robot                                         -->
+  <!-- ============================================================ -->
+
+  <!-- Link base del robot: punto de anclaje al mundo (world frame).
+       Es un link vacío (dummy) sin geometría. Sirve como raíz de
+       toda la cadena cinemática y permite fijar el robot al entorno. -->
   <xacro:phantomx_pincher_dummy_link
       link_name="$(arg prefix)${base_link}"
       collision="$(arg collision)"
       gazebo_preserve_fixed_joint="$(arg gazebo_preserve_fixed_joint)"/>
 
-  <!-- Base link -> kit "world_link" -->
+  <!-- Joint que conecta el link base del robot con world_link,
+       la raíz de la plataforma KIT definida en kit.xacro.
+       Con esto, base_link y la plataforma quedan unidos en
+       el mismo origen de coordenadas. -->
   <joint name="$(arg prefix)${base_link}_joint" type="fixed">
     <parent link="$(arg prefix)${base_link}"/>
-    <!-- Root of the kit defined in kit.xacro -->
+    <!-- world_link es la raíz definida en kit.xacro -->
     <child link="world_link"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <!-- Kit -> Arm mounting joint -->
+  <!-- Joint que conecta la plataforma KIT con la base del brazo.
+       El offset (13.25 mm en X, 16 mm en Z) posiciona el brazo
+       exactamente sobre el caseBaseRobot_link de la plataforma,
+       que es la caja negra donde físicamente se asienta el brazo. -->
   <joint name="$(arg prefix)kit_to_arm_base_joint" type="fixed">
-    <!-- Parent: link from kit.xacro where the robot sits -->
+    <!-- caseBaseRobot_link: link de la plataforma KIT donde se monta el brazo -->
     <parent link="caseBaseRobot_link"/>
-
-    <!-- Child: base link of the PhantomX arm -->
+    <!-- arm_base_link: link raíz del brazo definido en phantomx_pincher_arm.xacro -->
     <child link="$(arg prefix)arm_base_link"/>
-
-    <!-- Pose of the arm base relative to the kit (tuned in original repo) -->
-    <origin xyz="0.01325 0 0.016" rpy="0 0 0"/>
+    <!-- Offset ajustado para alinear el brazo con su posición física en la plataforma -->
+    <!--<origin xyz="0.01325 0 0.016" rpy="0 0 0"/> -->
+    <origin xyz="${0.00025 + (0.000125/2)} 0 ${0.016 + 0.005}" rpy="0 0 0"/> 
   </joint>
 
-  <!-- Arm -->
+  <!-- Instancia del brazo completo: expande el macro phantomx_pincher
+       definido en phantomx_pincher_arm.xacro, que a su vez construye
+       toda la cadena cinemática (hombro, codo, muñeca, gripper). -->
   <xacro:phantomx_pincher
       prefix="$(arg prefix)"
       base_link="arm_base_link"
@@ -92,7 +153,15 @@
       mimic_finger_joints="$(arg mimic_finger_joints)"
       gazebo_preserve_fixed_joint="$(arg gazebo_preserve_fixed_joint)"/>
 
-  <!-- Example environment / mounting macros (kept commented out) -->
+  <!-- ============================================================ -->
+  <!-- Montaje alternativo (comentado)                              -->
+  <!-- Cadena de montaje independiente de la plataforma KIT:        -->
+  <!--   task_board → task_board_mount → base_mount → brazo         -->
+  <!-- Se usaría si el brazo se instalara sobre un tablero de       -->
+  <!-- tareas estándar en lugar de la plataforma KIT actual.        -->
+  <!-- Para activarlo: descomentar este bloque Y el include de      -->
+  <!-- phantomx_pincher_mounting.xacro más arriba.                  -->
+  <!-- ============================================================ -->
   <!--
   <xacro:task_board
       prefix="$(arg prefix)"
@@ -113,11 +182,19 @@
       gazebo_preserve_fixed_joint="$(arg gazebo_preserve_fixed_joint)"/>
   -->
 
-  <!-- Gazebo - ROS 2 control (Ignition) 
+  <!-- ============================================================ -->
+  <!-- Plugin de Gazebo para ros2_control (comentado)              -->
+  <!-- Solo se activa cuando el plugin es 'ign' o 'gz' (Ignition   -->
+  <!-- Gazebo). Comentado porque Gazebo no se usa en la             -->
+  <!-- Raspberry Pi 5. Para activarlo en un PC con Gazebo:          -->
+  <!-- descomentar este bloque completo.                            -->
+  <!-- ============================================================ -->
+  <!--
   <xacro:if value="$(arg ros2_control)">
     <xacro:if value="${'ign' in '$(arg ros2_control_plugin)' or 'gz' in '$(arg ros2_control_plugin)'}">
       <xacro:ign_ros2_control controller_parameters="$(arg ros2_controller_parameters)"/>
     </xacro:if>
   </xacro:if>
   -->
+
 </robot>

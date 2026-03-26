@@ -1,83 +1,213 @@
 <?xml version="1.0"?>
-<!-- Macro for mounting PhantomX Pincher Robot Arm -->
+<!-- Macros de montaje del brazo PhantomX Pincher sobre superficies de trabajo -->
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!--                   -->
-  <!-- Imported elements -->
-  <!--                   -->
+  <!-- ============================================================ -->
+  <!-- Archivo importado                                            -->
+  <!-- Se cargan los macros utilitarios genéricos para crear links  -->
+  <!-- y joints (phantomx_pincher_link, phantomx_pincher_joint y    -->
+  <!-- phantomx_pincher_virtual_link).                              -->
+  <!-- ============================================================ -->
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher_utils.xacro"/>
 
 
-  <!--       -->
-  <!-- Macro -->
-  <!--       -->
-  <xacro:property name="base_mount_joint_name" value="base_mount_fixed_joint"/>
-  <xacro:property name="base_mount_joint_type" value="fixed"/>
-  <xacro:property name="base_mount_joint_origin_xyz" value="0.0 -0.0295 0.064"/>
-  <xacro:property name="base_mount_joint_origin_rpy" value="0.0 0.0 ${-pi/2}"/>
-  <xacro:property name="base_mount_link_name" value="base_mount_link"/>
-  <xacro:property name="base_mount_link_mu" value="1.0"/>
-  <xacro:property name="base_mount_link_mesh" value="phantomx_pincher_mount"/>
-  <xacro:property name="base_mount_link_collision_type" value="box"/>
-  <xacro:property name="base_mount_link_collision_box_size" value="0.104 0.104 0.048"/>
-  <xacro:property name="base_mount_link_mesh_offset_collision_xyz" value="0.0 0.0 0.024"/>
+  <!-- ============================================================ -->
+  <!-- Macro: base_mount                                            -->
+  <!-- Representa el soporte físico que fija la base del brazo a   -->
+  <!-- una superficie. Es la pieza intermedia entre el mundo y el  -->
+  <!-- brazo: el brazo se monta encima de este soporte.            -->
+  <!--                                                              -->
+  <!-- Este macro está comentado en phantomx_pincher.urdf.xacro     -->
+  <!-- porque en este proyecto el brazo se monta directamente sobre -->
+  <!-- la plataforma KIT (kit.xacro), no sobre este soporte.       -->
+  <!--                                                              -->
+  <!-- Parámetros:                                                  -->
+  <!--   prefix    : prefijo para nombres de links y joints         -->
+  <!--   child     : nombre del link hijo al que se conecta         -->
+  <!--               (normalmente arm_base_link del brazo)          -->
+  <!--   collision : activa/desactiva la geometría de colisión       -->
+  <!--   gazebo_preserve_fixed_joint : evita que Gazebo fusione     -->
+  <!--               el joint fijo con su link padre en SDF         -->
+  <!-- ============================================================ -->
+
+  <!-- Posición y orientación del joint que conecta base_mount_link
+       con el link hijo (base del brazo). El offset Z de 64 mm
+       corresponde a la altura del soporte, y la rotación de -90°
+       en Z alinea el brazo con la orientación correcta. -->
+  <xacro:property name="base_mount_joint_name"       value="base_mount_fixed_joint"/>
+  <xacro:property name="base_mount_joint_type"       value="fixed"/>
+  <xacro:property name="base_mount_joint_origin_xyz" value="0.0 -0.0295 0.064"/>   <!-- Offset al punto de montaje del brazo (m) -->
+  <xacro:property name="base_mount_joint_origin_rpy" value="0.0 0.0 ${-pi/2}"/>    <!-- Rotación -90° en Z para alinear el brazo -->
+
+  <!-- Geometría del soporte base: caja de 104x104x48 mm.
+       La malla visual es phantomx_pincher_mount.dae. -->
+  <xacro:property name="base_mount_link_name"              value="base_mount_link"/>
+  <xacro:property name="base_mount_link_mu"                value="1.0"/>
+  <xacro:property name="base_mount_link_mesh"              value="phantomx_pincher_mount"/>  <!-- Malla visual: meshes/visual/phantomx_pincher_mount.dae -->
+  <xacro:property name="base_mount_link_collision_type"    value="box"/>
+  <xacro:property name="base_mount_link_collision_box_size" value="0.104 0.104 0.048"/>       <!-- Dimensiones de la caja de colisión (m) -->
+  <xacro:property name="base_mount_link_mesh_offset_collision_xyz" value="0.0 0.0 0.024"/>    <!-- Centro de la caja desplazado a la mitad de su altura -->
+
   <xacro:macro name="base_mount" params="
     prefix
     child
     collision:=true
     gazebo_preserve_fixed_joint:=false
   ">
-    <xacro:phantomx_pincher_joint parent="${prefix}${base_mount_link_name}" child="${prefix}${child}" joint_name="${prefix}${base_mount_joint_name}" joint_type="${base_mount_joint_type}" joint_origin_xyz="${base_mount_joint_origin_xyz}" joint_origin_rpy="${base_mount_joint_origin_rpy}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:phantomx_pincher_link link_name="${prefix}${base_mount_link_name}" mesh="${base_mount_link_mesh}" collision="${collision}" collision_type="${base_mount_link_collision_type}" collision_box_size="${base_mount_link_collision_box_size}" mesh_offset_collision_xyz="${base_mount_link_mesh_offset_collision_xyz}" mu="${base_mount_link_mu}"/>
+    <!-- Joint fijo que conecta el soporte base con el link hijo (base del brazo) -->
+    <xacro:phantomx_pincher_joint
+        parent="${prefix}${base_mount_link_name}"
+        child="${prefix}${child}"
+        joint_name="${prefix}${base_mount_joint_name}"
+        joint_type="${base_mount_joint_type}"
+        joint_origin_xyz="${base_mount_joint_origin_xyz}"
+        joint_origin_rpy="${base_mount_joint_origin_rpy}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Link del soporte base con su malla visual y colisión aproximada con caja -->
+    <xacro:phantomx_pincher_link
+        link_name="${prefix}${base_mount_link_name}"
+        mesh="${base_mount_link_mesh}"
+        collision="${collision}"
+        collision_type="${base_mount_link_collision_type}"
+        collision_box_size="${base_mount_link_collision_box_size}"
+        mesh_offset_collision_xyz="${base_mount_link_mesh_offset_collision_xyz}"
+        mu="${base_mount_link_mu}"/>
   </xacro:macro>
 
-  <!--       -->
-  <!-- Macro -->
-  <!--       -->
-  <xacro:property name="task_board_mount_joint_name" value="task_board_mount_fixed_joint"/>
-  <xacro:property name="task_board_mount_joint_type" value="fixed"/>
-  <xacro:property name="task_board_mount_joint_origin_xyz" value="0.0 0.0 0.003"/>
+
+  <!-- ============================================================ -->
+  <!-- Macro: task_board_mount                                      -->
+  <!-- Placa base cuadrada (148x148x3 mm) que sirve de interfaz     -->
+  <!-- entre el tablero de tareas y el soporte del brazo. Se sitúa  -->
+  <!-- entre task_board y base_mount en la cadena de montaje.       -->
+  <!--                                                              -->
+  <!-- Cadena completa de montaje (de abajo a arriba):              -->
+  <!--   task_board_link                                            -->
+  <!--     └─ task_board_mount_link   (esta pieza)                  -->
+  <!--           └─ base_mount_link   (soporte del brazo)           -->
+  <!--                 └─ arm_base_link (base del brazo)            -->
+  <!--                                                              -->
+  <!-- Parámetros: igual que base_mount.                            -->
+  <!-- ============================================================ -->
+
+  <!-- El joint desplaza 3 mm en Z, correspondiente al grosor
+       de la placa de montaje. -->
+  <xacro:property name="task_board_mount_joint_name"       value="task_board_mount_fixed_joint"/>
+  <xacro:property name="task_board_mount_joint_type"       value="fixed"/>
+  <xacro:property name="task_board_mount_joint_origin_xyz" value="0.0 0.0 0.003"/>  <!-- Grosor de la placa (m) -->
   <xacro:property name="task_board_mount_joint_origin_rpy" value="0.0 0.0 0.0"/>
-  <xacro:property name="task_board_mount_link_name" value="task_board_mount_link"/>
-  <xacro:property name="task_board_mount_link_mu" value="1.0"/>
-  <xacro:property name="task_board_mount_link_mesh" value="task_board_module_phantomx_pincher_mount"/>
-  <xacro:property name="task_board_mount_link_collision_type" value="box"/>
-  <xacro:property name="task_board_mount_link_collision_box_size" value="0.148 0.148 0.003"/>
-  <xacro:property name="task_board_mount_link_mesh_offset_collision_xyz" value="0.0 0.0 0.0015"/>
+
+  <!-- Geometría de la placa de montaje: caja plana de 148x148x3 mm.
+       La malla visual es task_board_module_phantomx_pincher_mount.dae -->
+  <xacro:property name="task_board_mount_link_name"              value="task_board_mount_link"/>
+  <xacro:property name="task_board_mount_link_mu"                value="1.0"/>
+  <xacro:property name="task_board_mount_link_mesh"              value="task_board_module_phantomx_pincher_mount"/> <!-- Malla visual: meshes/visual/task_board_module_phantomx_pincher_mount.dae -->
+  <xacro:property name="task_board_mount_link_collision_type"    value="box"/>
+  <xacro:property name="task_board_mount_link_collision_box_size" value="0.148 0.148 0.003"/>     <!-- Dimensiones de la caja de colisión (m) -->
+  <xacro:property name="task_board_mount_link_mesh_offset_collision_xyz" value="0.0 0.0 0.0015"/> <!-- Centro de la caja en la mitad del grosor -->
+
   <xacro:macro name="task_board_mount" params="
     prefix
     child
     collision:=true
     gazebo_preserve_fixed_joint:=false
   ">
-    <xacro:phantomx_pincher_joint parent="${prefix}${task_board_mount_link_name}" child="${prefix}${child}" joint_name="${prefix}${task_board_mount_joint_name}" joint_type="${task_board_mount_joint_type}" joint_origin_xyz="${task_board_mount_joint_origin_xyz}" joint_origin_rpy="${task_board_mount_joint_origin_rpy}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:phantomx_pincher_link link_name="${prefix}${task_board_mount_link_name}" mesh="${task_board_mount_link_mesh}" collision="${collision}" collision_type="${task_board_mount_link_collision_type}" collision_box_size="${task_board_mount_link_collision_box_size}" mesh_offset_collision_xyz="${task_board_mount_link_mesh_offset_collision_xyz}" mu="${task_board_mount_link_mu}"/>
+    <!-- Joint fijo que conecta la placa de montaje con el link hijo (base_mount) -->
+    <xacro:phantomx_pincher_joint
+        parent="${prefix}${task_board_mount_link_name}"
+        child="${prefix}${child}"
+        joint_name="${prefix}${task_board_mount_joint_name}"
+        joint_type="${task_board_mount_joint_type}"
+        joint_origin_xyz="${task_board_mount_joint_origin_xyz}"
+        joint_origin_rpy="${task_board_mount_joint_origin_rpy}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Link de la placa con su malla visual y colisión con caja plana -->
+    <xacro:phantomx_pincher_link
+        link_name="${prefix}${task_board_mount_link_name}"
+        mesh="${task_board_mount_link_mesh}"
+        collision="${collision}"
+        collision_type="${task_board_mount_link_collision_type}"
+        collision_box_size="${task_board_mount_link_collision_box_size}"
+        mesh_offset_collision_xyz="${task_board_mount_link_mesh_offset_collision_xyz}"
+        mu="${task_board_mount_link_mu}"/>
   </xacro:macro>
 
-  <!--       -->
-  <!-- Macro -->
-  <!--       -->
-  <xacro:property name="task_board_joint_name" value="task_board_fixed_joint"/>
-  <xacro:property name="task_board_joint_type" value="fixed"/>
-  <xacro:property name="task_board_joint_origin_xyz" value="-0.075 0.0 0.024"/>
-  <xacro:property name="task_board_joint_origin_rpy" value="0.0 0.0 ${pi/2}"/>
-  <xacro:property name="task_board_link_name" value="task_board_link"/>
-  <xacro:property name="task_board_link_mu" value="1.0"/>
-  <xacro:property name="task_board_link_mesh" value="task_board"/>
-  <xacro:property name="task_board_link_collision_type" value="mesh"/>
+
+  <!-- ============================================================ -->
+  <!-- Macro: task_board                                            -->
+  <!-- Tablero de tareas sobre el que opera el brazo. Es la raíz   -->
+  <!-- de toda la cadena de montaje: todo lo demás (placa, soporte  -->
+  <!-- y brazo) cuelga de este link.                               -->
+  <!--                                                              -->
+  <!-- A diferencia de los macros anteriores, este crea DOS links:  -->
+  <!--   1. task_board_link   : el tablero físico con geometría      -->
+  <!--   2. task_board_module_link : link virtual sin geometría que  -->
+  <!--      marca el punto de referencia del módulo completo para   -->
+  <!--      que otros sistemas (ej. MoveIt) puedan referenciar      -->
+  <!--      la posición del conjunto tablero+brazo.                 -->
+  <!--                                                              -->
+  <!-- La colisión usa la malla STL directamente (collision_type    -->
+  <!-- = 'mesh') por la geometría irregular del tablero.            -->
+  <!--                                                              -->
+  <!-- Parámetros: igual que base_mount.                            -->
+  <!-- ============================================================ -->
+
+  <!-- El joint desplaza -75 mm en X y 24 mm en Z, y rota 90° en Z
+       para orientar correctamente el tablero respecto al link hijo. -->
+  <xacro:property name="task_board_joint_name"       value="task_board_fixed_joint"/>
+  <xacro:property name="task_board_joint_type"       value="fixed"/>
+  <xacro:property name="task_board_joint_origin_xyz" value="-0.075 0.0 0.024"/> <!-- Offset al punto de conexión con la placa (m) -->
+  <xacro:property name="task_board_joint_origin_rpy" value="0.0 0.0 ${pi/2}"/>  <!-- Rotación 90° en Z para orientar el tablero -->
+
+  <!-- Geometría del tablero: colisión con malla STL (geometría irregular).
+       La malla visual es task_board.dae -->
+  <xacro:property name="task_board_link_name"            value="task_board_link"/>
+  <xacro:property name="task_board_link_mu"              value="1.0"/>
+  <xacro:property name="task_board_link_mesh"            value="task_board"/>    <!-- Malla visual: meshes/visual/task_board.dae -->
+  <xacro:property name="task_board_link_collision_type"  value="mesh"/>          <!-- Colisión con malla STL por geometría irregular -->
+
+  <!-- Link virtual del módulo: punto de referencia centrado en el
+       conjunto tablero+soporte. Se desplaza +75 mm en X y 24 mm en Z
+       (inverso al joint del tablero) para volver al centro del módulo. -->
   <xacro:property name="task_board_module_joint_origin_xyz" value="0.075 0.0 0.024"/>
   <xacro:property name="task_board_module_joint_origin_rpy" value="0.0 0.0 0.0"/>
-  <xacro:property name="task_board_module_link_name" value="task_board_module_link"/>
+  <xacro:property name="task_board_module_link_name"        value="task_board_module_link"/>
+
   <xacro:macro name="task_board" params="
     prefix
     child
     collision:=true
     gazebo_preserve_fixed_joint:=false
   ">
-    <xacro:phantomx_pincher_joint parent="${prefix}${task_board_link_name}" child="${prefix}${child}" joint_name="${prefix}${task_board_joint_name}" joint_type="${task_board_joint_type}" joint_origin_xyz="${task_board_joint_origin_xyz}" joint_origin_rpy="${task_board_joint_origin_rpy}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:phantomx_pincher_link link_name="${prefix}${task_board_link_name}" mesh="${task_board_link_mesh}" collision="${collision}" collision_type="${task_board_link_collision_type}" mu="${task_board_link_mu}"/>
+    <!-- Joint fijo que conecta el tablero con el link hijo (task_board_mount) -->
+    <xacro:phantomx_pincher_joint
+        parent="${prefix}${task_board_link_name}"
+        child="${prefix}${child}"
+        joint_name="${prefix}${task_board_joint_name}"
+        joint_type="${task_board_joint_type}"
+        joint_origin_xyz="${task_board_joint_origin_xyz}"
+        joint_origin_rpy="${task_board_joint_origin_rpy}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
 
-    <xacro:phantomx_pincher_virtual_link parent="${prefix}${task_board_link_name}" link_name="${prefix}${task_board_module_link_name}" joint_origin_xyz="${task_board_module_joint_origin_xyz}" joint_origin_rpy="${task_board_module_joint_origin_rpy}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+    <!-- Link del tablero con malla visual y colisión con la malla STL -->
+    <xacro:phantomx_pincher_link
+        link_name="${prefix}${task_board_link_name}"
+        mesh="${task_board_link_mesh}"
+        collision="${collision}"
+        collision_type="${task_board_link_collision_type}"
+        mu="${task_board_link_mu}"/>
+
+    <!-- Link virtual sin geometría que representa el centro del módulo
+         completo (tablero + soporte). Útil como frame de referencia
+         para planificación de movimientos con MoveIt. -->
+    <xacro:phantomx_pincher_virtual_link
+        parent="${prefix}${task_board_link_name}"
+        link_name="${prefix}${task_board_module_link_name}"
+        joint_origin_xyz="${task_board_module_joint_origin_xyz}"
+        joint_origin_rpy="${task_board_module_joint_origin_rpy}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
   </xacro:macro>
 
 </robot>

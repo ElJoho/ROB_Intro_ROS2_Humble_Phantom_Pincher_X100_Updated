@@ -1,11 +1,37 @@
 <?xml version="1.0"?>
-<!-- Macro for inertial properties of PhantomX Pincher Robot Arm -->
+<!-- Propiedades inerciales de cada pieza del brazo PhantomX Pincher -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!--       -->
-  <!-- Macro -->
-  <!--       -->
+  <!-- ============================================================ -->
+  <!-- Macro: phantomx_pincher_inertial                             -->
+  <!-- Asigna la masa, el centro de masa y el tensor de inercia a   -->
+  <!-- cada link del brazo según el nombre de su malla.             -->
+  <!--                                                              -->
+  <!-- Estos valores fueron calculados a partir de los modelos CAD  -->
+  <!-- reales de cada pieza. Son necesarios para que el simulador   -->
+  <!-- físico (Gazebo) calcule correctamente el movimiento dinámico  -->
+  <!-- del brazo: fuerzas, aceleraciones y torques.                 -->
+  <!--                                                              -->
+  <!-- Parámetros:                                                  -->
+  <!--   mesh            : nombre de la malla (ej. 'ax12', 'f3')    -->
+  <!--                     actúa como selector del bloque correcto   -->
+  <!--   mesh_offset_rpy : orientación del frame inercial respecto  -->
+  <!--                     al origen del link (heredada del hardware) -->
+  <!--                                                              -->
+  <!-- Estructura de cada bloque:                                   -->
+  <!--   origin xyz : posición del centro de masa (CoM) en metros   -->
+  <!--   origin rpy : orientación del frame inercial                -->
+  <!--   mass       : masa de la pieza en kilogramos                -->
+  <!--   inertia    : tensor de inercia 3x3 (simétrico) en kg·m².   -->
+  <!--     ixx, iyy, izz : momentos principales de inercia          -->
+  <!--     ixy, ixz, iyz : productos de inercia (miden asimetría)   -->
+  <!-- ============================================================ -->
   <xacro:macro name="phantomx_pincher_inertial" params="mesh mesh_offset_rpy">
+
+    <!-- Servo Dynamixel AX-12
+         El componente más pesado del brazo (81 g). Se usa 4 veces:
+         hombro pan, hombro lift, codo, muñeca y gripper.
+         El CoM está ligeramente desplazado en Z por el eje de salida. -->
     <xacro:if value="${mesh == 'ax12'}">
       <inertial>
         <origin xyz="-7.38454e-07 0.000422614 -0.0130296" rpy="${mesh_offset_rpy}"/>
@@ -14,6 +40,10 @@
       </inertial>
     </xacro:if>
 
+    <!-- Bracket Bioloid F2 (muñeca)
+         Bracket en L de 14 g. Se usa una sola vez como articulación
+         de la muñeca. El CoM está centrado en X/Y con desplazamiento
+         en Z por la altura del bracket. -->
     <xacro:if value="${mesh == 'f2'}">
       <inertial>
         <origin xyz="1.83625e-06 4.41782e-08 0.0154045" rpy="${mesh_offset_rpy}"/>
@@ -22,6 +52,10 @@
       </inertial>
     </xacro:if>
 
+    <!-- Bracket Bioloid F3 (acople plano)
+         Pieza plana de 6 g usada como acople fijo entre segmentos
+         y como articulación de rotación del hombro. El CoM está
+         cerca del origen con pequeño desplazamiento negativo en Z. -->
     <xacro:if value="${mesh == 'f3'}">
       <inertial>
         <origin xyz="-1.72524e-06 4.83783e-07 -0.00240396" rpy="${mesh_offset_rpy}"/>
@@ -30,6 +64,11 @@
       </inertial>
     </xacro:if>
 
+    <!-- Bracket Bioloid F4 (segmento largo)
+         La pieza estructural más larga y segunda más pesada (25 g).
+         Se usa para el hombro lift y el codo. El CoM está
+         desplazado en Z (~29 mm) por ser un bracket alargado, y
+         tiene un pequeño desplazamiento en X por asimetría. -->
     <xacro:if value="${mesh == 'f4'}">
       <inertial>
         <origin xyz="-0.000589318 3.65417e-05 0.0288737" rpy="${mesh_offset_rpy}"/>
@@ -38,6 +77,10 @@
       </inertial>
     </xacro:if>
 
+    <!-- Espaciador Bioloid F10
+         La pieza más ligera (3.5 g) y más delgada (4 mm).
+         Se usa 6 veces en total (3 en el hombro, 3 en el codo).
+         El CoM está prácticamente en el origen dado su poco espesor. -->
     <xacro:if value="${mesh == 'f10'}">
       <inertial>
         <origin xyz="-8.67784e-06 -8.79317e-07 0.000171599" rpy="${mesh_offset_rpy}"/>
@@ -46,6 +89,10 @@
       </inertial>
     </xacro:if>
 
+    <!-- Dedo del gripper
+         Pieza de 9.8 g con geometría irregular. Se instancia dos
+         veces (dedo 1 y dedo 2). El CoM tiene desplazamiento
+         notable en X (-6 mm) por la forma asimétrica del dedo. -->
     <xacro:if value="${mesh == 'finger'}">
       <inertial>
         <origin xyz="-0.00607194 -4.42132e-19 -0.00471261" rpy="${mesh_offset_rpy}"/>
@@ -54,6 +101,10 @@
       </inertial>
     </xacro:if>
 
+    <!-- Placa base del gripper
+         Pieza de 11.8 g que sostiene ambos dedos. El CoM está
+         centrado en X y Z; el desplazamiento en Y (30 nm) es
+         prácticamente nulo, indicando una geometría muy simétrica. -->
     <xacro:if value="${mesh == 'gripper_base'}">
       <inertial>
         <origin xyz="0 2.98023e-08 0" rpy="${mesh_offset_rpy}"/>
@@ -62,6 +113,11 @@
       </inertial>
     </xacro:if>
 
+    <!-- Soporte de montaje del brazo (phantomx_pincher_mount)
+         Pieza de 41.7 g que fija el brazo a una superficie o
+         tablero de trabajo. No forma parte del brazo activo pero
+         se incluye para completitud del modelo. El CoM está
+         desplazado en Z (~34 mm) por la altura del soporte. -->
     <xacro:if value="${mesh == 'phantomx_pincher_mount'}">
       <inertial>
         <origin xyz="0.00037683 0.000627242 0.034281" rpy="${mesh_offset_rpy}"/>
@@ -70,6 +126,11 @@
       </inertial>
     </xacro:if>
 
+    <!-- Módulo de tablero de tareas con soporte (task_board_module_phantomx_pincher_mount)
+         Pieza de 58.3 g que combina el tablero con el soporte del brazo.
+         El CoM está casi en el origen XY con desplazamiento mínimo en Z
+         (1.5 mm), lo que indica una geometría muy plana y simétrica.
+         Los momentos de inercia ixx e iyy son iguales por la simetría. -->
     <xacro:if value="${mesh == 'task_board_module_phantomx_pincher_mount'}">
       <inertial>
         <origin xyz="-4.50216e-09 -4.41466e-09 0.00149998" rpy="${mesh_offset_rpy}"/>
@@ -78,6 +139,11 @@
       </inertial>
     </xacro:if>
 
+    <!-- Tablero de tareas (task_board)
+         La pieza más pesada de todas (600 g). Es la superficie de
+         trabajo sobre la que opera el brazo. Los momentos de inercia
+         son grandes por sus dimensiones. El CoM está desplazado en
+         Z (~16 mm) por el grosor del tablero. -->
     <xacro:if value="${mesh == 'task_board'}">
       <inertial>
         <origin xyz="7.59924e-07 2.79305e-08 0.0164041" rpy="${mesh_offset_rpy}"/>
@@ -85,5 +151,6 @@
         <inertia ixx="0.0065283400178141335" iyy="0.003398671922618594" izz="0.009860990026576852" ixy="-1.7343908287424124e-12" ixz="2.8936318115622572e-09" iyz="-8.805547978958671e-11"/>
       </inertial>
     </xacro:if>
+
   </xacro:macro>
 </robot>

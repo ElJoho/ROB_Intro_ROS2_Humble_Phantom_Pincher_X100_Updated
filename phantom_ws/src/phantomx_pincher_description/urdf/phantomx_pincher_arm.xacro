@@ -2,37 +2,65 @@
 <!-- Xacro for PhantomX Pincher Robot Arm arm -->
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!--                   -->
-  <!-- Imported elements -->
-  <!--                   -->
+  <!-- ============================================================ -->
+  <!-- constantes                                                   -->
+  <!-- ============================================================ -->
+
+  <xacro:property name="PI" value="3.141592653589793" />
+
+  <!-- ============================================================ -->
+  <!-- Archivos importados                                          -->
+  <!-- Se cargan los macros de componentes físicos (servos, piezas  -->
+  <!-- bioloid) y la configuración de ros2_control del brazo.       -->
+  <!-- ============================================================ -->
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher_hardware.xacro"/>
   <xacro:include filename="$(find phantomx_pincher_description)/urdf/phantomx_pincher.ros2_control"/>
 
 
-  <!--            -->
-  <!-- Properties -->
-  <!--            -->
-  <xacro:property name="ax12_height" value="0.032"/>
-  <xacro:property name="ax12_width" value="0.038"/>
-  <xacro:property name="f2_height" value="0.0265"/>
-  <xacro:property name="f4_height" value="0.0525"/>
-  <xacro:property name="f10_height" value="0.004"/>
-  <xacro:property name="finger_centre_offset_x" value="0.019"/>
-  <xacro:property name="finger_centre_offset_y" value="0.0115"/>
+  <!-- ============================================================ -->
+  <!-- Dimensiones físicas de los componentes (en metros)           -->
+  <!-- Estos valores representan las medidas reales de las piezas   -->
+  <!-- del robot: servos AX-12 y brackets Bioloid F2/F4/F10.        -->
+  <!-- ============================================================ -->
+  <xacro:property name="ax12_height"             value="0.032"/>  <!-- Alto del servo AX-12 -->
+  <xacro:property name="ax12_width"              value="0.038"/>  <!-- Ancho del servo AX-12 -->
+  <xacro:property name="f2_height"               value="0.0265"/> <!-- Alto del bracket F2 -->
+  <xacro:property name="f4_height"               value="0.0525"/> <!-- Alto del bracket F4 -->
+  <xacro:property name="f10_height"              value="0.004"/>  <!-- Alto del espaciador F10 -->
+  <xacro:property name="finger_centre_offset_x"  value="0.019"/>  <!-- Desplazamiento X del centro del dedo -->
+  <xacro:property name="finger_centre_offset_y"  value="0.0115"/> <!-- Desplazamiento Y del centro del dedo -->
 
-  <xacro:property name="joints_velocity_limit" value="${pi/2}"/>
-  <xacro:property name="pan_joint_lower_limit" value="${-150*pi/180}"/>
-  <xacro:property name="pan_joint_upper_limit" value="${150*pi/180}"/>
-  <xacro:property name="shoulder_joint_lower_limit" value="${-120*pi/180}"/>
-  <xacro:property name="shoulder_joint_upper_limit" value="${120*pi/180}"/>
-  <xacro:property name="elbow_joint_lower_limit" value="${-139*pi/180}"/>
-  <xacro:property name="elbow_joint_upper_limit" value="${139*pi/180}"/>
-  <xacro:property name="wrist_joint_lower_limit" value="${-98*pi/180}"/>
-  <xacro:property name="wrist_joint_upper_limit" value="${103*pi/180}"/>
+  <!-- ============================================================ -->
+  <!-- Límites de movimiento de las articulaciones (en radianes)    -->
+  <!-- Definen hasta dónde puede girar cada articulación del brazo. -->
+  <!-- ============================================================ -->
+  <xacro:property name="joints_velocity_limit"      value="${pi/2}"/>        <!-- Velocidad máxima de todas las articulaciones -->
+  <xacro:property name="pan_joint_lower_limit"      value="${-150*pi/180}"/> <!-- Giro mínimo del hombro (pan): -150° -->
+  <xacro:property name="pan_joint_upper_limit"      value="${150*pi/180}"/>  <!-- Giro máximo del hombro (pan):  150° -->
+  <xacro:property name="shoulder_joint_lower_limit" value="${-120*pi/180}"/> <!-- Giro mínimo del hombro (lift): -120° -->
+  <xacro:property name="shoulder_joint_upper_limit" value="${120*pi/180}"/>  <!-- Giro máximo del hombro (lift):  120° -->
+  <xacro:property name="elbow_joint_lower_limit"    value="${-139*pi/180}"/> <!-- Giro mínimo del codo: -139° -->
+  <xacro:property name="elbow_joint_upper_limit"    value="${139*pi/180}"/>  <!-- Giro máximo del codo:  139° -->
+  <xacro:property name="wrist_joint_lower_limit"    value="${-98*pi/180}"/>  <!-- Giro mínimo de la muñeca:  -98° -->
+  <xacro:property name="wrist_joint_upper_limit"    value="${103*pi/180}"/>  <!-- Giro máximo de la muñeca:  103° -->
 
-  <!--       -->
-  <!-- Macro -->
-  <!--       -->
+  <!-- ============================================================ -->
+  <!-- Macro principal del brazo robótico                           -->
+  <!-- Este macro ensambla todo el brazo. Se llama desde el archivo -->
+  <!-- phantomx_pincher.urdf.xacro pasándole los parámetros         -->
+  <!-- necesarios (prefijo, colisiones, control, etc.).             -->
+  <!--                                                              -->
+  <!-- Parámetros:                                                  -->
+  <!--   prefix        : prefijo para nombrar todos los links/joints -->
+  <!--   base_link     : nombre del link base del brazo             -->
+  <!--   collision     : activa/desactiva geometría de colisión      -->
+  <!--   ros2_control  : activa/desactiva el controlador ROS2        -->
+  <!--   ros2_control_plugin          : tipo de plugin (fake/real)  -->
+  <!--   ros2_control_command_interface : interfaz de comando        -->
+  <!--   mimic_finger_joints : si el dedo 2 imita al dedo 1         -->
+  <!--   gazebo_preserve_fixed_joint  : conservar joints fijos en   -->
+  <!--                                  la conversión a SDF          -->
+  <!-- ============================================================ -->
   <xacro:macro name="phantomx_pincher" params="
     prefix
     base_link:=base_link
@@ -43,63 +71,362 @@
     mimic_finger_joints:=false
     gazebo_preserve_fixed_joint:=false
   ">
-    <!-- Base link of the arm, which can be used to attach it to the rest of the world -->
+
+    <!-- Link base del brazo: punto de anclaje al resto del robot -->
     <link name="${prefix}${base_link}"/>
 
-    <!-- Shoulder Pan -->
-    <xacro:dynamixel_ax12_fixed prefix="${prefix}" parent="${base_link}" name="arm_shoulder_pan_servo" joint_origin_xyz="0.0 0.0 0.0" joint_origin_rpy="${pi/2} 0.0 ${pi/2}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f3_revolute prefix="${prefix}" parent="arm_shoulder_pan_servo_link" name="arm_shoulder_pan" joint_velocity_limit="${joints_velocity_limit}" joint_lower_limit="${pan_joint_lower_limit}" joint_upper_limit="${pan_joint_upper_limit}" joint_origin_xyz="0 ${ax12_width/2} 0.0" joint_origin_rpy="${-pi/2} ${pi/2} ${pi}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+    <!-- ==================== -->
+    <!-- Hombro - Rotación    -->
+    <!-- ==================== -->
+    <!-- Servo AX-12 que permite la rotación horizontal del brazo (giro sobre el eje Z).
+         Es la primera articulación del brazo, conectada directamente a la base. -->
+    <xacro:dynamixel_ax12_fixed
+        prefix="${prefix}"
+        parent="${base_link}"
+        name="arm_shoulder_pan_servo"
+        joint_origin_xyz="0.0 0.0 0.0"
+        joint_origin_rpy="${pi/2} 0.0 ${pi/2}"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
 
-    <!-- Shoulder Lift -->
-    <xacro:dynamixel_ax12_fixed prefix="${prefix}" parent="arm_shoulder_pan_link" name="arm_shoulder_lift_servo" joint_origin_xyz="0.0 0.0 ${-ax12_height-f10_height+0.001}" joint_origin_rpy="0.0 ${pi} 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f4_revolute prefix="${prefix}" parent="arm_shoulder_lift_servo_link" name="arm_shoulder_lift" joint_velocity_limit="${joints_velocity_limit}" joint_lower_limit="${shoulder_joint_lower_limit}" joint_upper_limit="${shoulder_joint_upper_limit}" joint_origin_xyz="0.0 0.0 0.0" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f10_fixed prefix="${prefix}" parent="arm_shoulder_lift_link" name="arm_shoulder_F10_0" joint_origin_xyz="0.0 0.0 ${f4_height+f10_height/2}" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f10_fixed prefix="${prefix}" parent="arm_shoulder_F10_0_link" name="arm_shoulder_F10_1" joint_origin_xyz="0.0 0.0 ${f10_height}" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f10_fixed prefix="${prefix}" parent="arm_shoulder_F10_1_link" name="arm_shoulder_F10_2" joint_origin_xyz="0.0 0.0 ${f10_height}" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f3_fixed prefix="${prefix}" parent="arm_shoulder_F10_2_link" name="arm_shoulder_F3_0" joint_origin_xyz="0.0 0.0 ${f10_height/2}" joint_origin_rpy="0.0 ${pi} 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+    <!-- Bracket F3 giratorio que forma el link de rotación del hombro.
+         Define el rango de giro: -150° a 150°. -->
+    <xacro:bioloid_f3_revolute
+        prefix="${prefix}"
+        parent="arm_shoulder_pan_servo_link"
+        name="arm_shoulder_pan"
+        joint_velocity_limit="${joints_velocity_limit}"
+        joint_lower_limit="${pan_joint_lower_limit}"
+        joint_upper_limit="${pan_joint_upper_limit}"
+        joint_origin_xyz="0 ${ax12_width/2} 0.0"
+        joint_origin_rpy="${-pi/2} ${pi/2} ${pi}"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
 
-    <!-- Elbow -->
-    <xacro:dynamixel_ax12_fixed prefix="${prefix}" parent="arm_shoulder_F3_0_link" name="arm_elbow_flex_servo" joint_origin_xyz="0.0 0.0 ${-ax12_height-f10_height+0.001}" joint_origin_rpy="0.0 ${pi} 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f4_revolute prefix="${prefix}" parent="arm_elbow_flex_servo_link" name="arm_elbow_flex" joint_velocity_limit="${joints_velocity_limit}" joint_lower_limit="${elbow_joint_lower_limit}" joint_upper_limit="${elbow_joint_upper_limit}" joint_origin_xyz="0.0 0.0 0.0" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f10_fixed prefix="${prefix}" parent="arm_elbow_flex_link" name="arm_elbow_F10_0" joint_origin_xyz="0.0 0.0 ${f4_height+f10_height/2}" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f10_fixed prefix="${prefix}" parent="arm_elbow_F10_0_link" name="arm_elbow_F10_1" joint_origin_xyz="0.0 0.0 ${f10_height}" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f10_fixed prefix="${prefix}" parent="arm_elbow_F10_1_link" name="arm_elbow_F10_2" joint_origin_xyz="0.0 0.0 ${f10_height}" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f3_fixed prefix="${prefix}" parent="arm_elbow_F10_2_link" name="arm_elbow_F3_0" joint_origin_xyz="0.0 0.0 ${f10_height/2}" joint_origin_rpy="0.0 ${pi} 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+    <!-- ==================== -->
+    <!-- Hombro - Elevación   -->
+    <!-- ==================== -->
+    <!-- Servo AX-12 responsable de subir y bajar el brazo (movimiento de elevación).
+         Se monta sobre el link de rotación del hombro. -->
+    <xacro:dynamixel_ax12_fixed
+        prefix="${prefix}"
+        parent="arm_shoulder_pan_link"
+        name="arm_shoulder_lift_servo"
+        joint_origin_xyz="0.0 0.0 ${-ax12_height-f10_height+0.001}"
+        joint_origin_rpy="0.0 ${pi} 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
 
-    <!-- Wrist -->
-    <xacro:dynamixel_ax12_fixed prefix="${prefix}" parent="arm_elbow_F3_0_link" name="arm_wrist_flex_servo" joint_origin_xyz="0.0 0.0 ${-ax12_height-f10_height+0.001}" joint_origin_rpy="0.0 ${pi} 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f2_revolute prefix="${prefix}" parent="arm_wrist_flex_servo_link" name="arm_wrist_flex" joint_velocity_limit="${joints_velocity_limit}" joint_lower_limit="${wrist_joint_lower_limit}" joint_upper_limit="${wrist_joint_upper_limit}" joint_origin_xyz="0.0 0.0 0.0" joint_origin_rpy="0.0 0.0 0.0" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:bioloid_f3_fixed prefix="${prefix}" parent="arm_wrist_flex_link" name="arm_wrist_F3_0" joint_origin_xyz="0.0 0.0 ${f2_height}" joint_origin_rpy="0 ${pi} ${-pi}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+    <!-- Bracket F4 giratorio que forma el link de elevación del hombro.
+         Define el rango de elevación: -120° a 120°. -->
+    <xacro:bioloid_f4_revolute
+        prefix="${prefix}"
+        parent="arm_shoulder_lift_servo_link"
+        name="arm_shoulder_lift"
+        joint_velocity_limit="${joints_velocity_limit}"
+        joint_lower_limit="${shoulder_joint_lower_limit}"
+        joint_upper_limit="${shoulder_joint_upper_limit}"
+        joint_origin_xyz="0.0 0.0 0.0"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
 
-    <!-- Gripper -->
-    <xacro:dynamixel_ax12_fixed prefix="${prefix}" parent="arm_wrist_F3_0_link" name="gripper_servo" joint_origin_xyz="0.0 0.0 ${-ax12_width/2}" joint_origin_rpy="${pi/2} ${pi} ${pi/2}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:gripper_finger_base prefix="${prefix}" parent="gripper_servo_link" name="gripper_finger_base" joint_origin_xyz="0 ${ax12_width/2} 0.0" joint_origin_rpy="${pi} 0.0 ${pi/2}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <xacro:pincher_finger prefix="${prefix}" parent="gripper_finger_base_link" name="gripper_finger1" joint_origin_xyz="${finger_centre_offset_x} ${finger_centre_offset_y} 0.0" joint_origin_rpy="${pi/2} 0.0 ${pi/2}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
-    <!-- If enabled, mimic finger joints -->
+    <!-- Tres espaciadores F10 apilados que extienden el segmento del hombro
+         hasta el siguiente servo (codo). Cada uno añade 4 mm de longitud. -->
+    <xacro:bioloid_f10_fixed
+        prefix="${prefix}"
+        parent="arm_shoulder_lift_link"
+        name="arm_shoulder_F10_0"
+        joint_origin_xyz="0.0 0.0 ${f4_height+f10_height/2}"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <xacro:bioloid_f10_fixed
+        prefix="${prefix}"
+        parent="arm_shoulder_F10_0_link"
+        name="arm_shoulder_F10_1"
+        joint_origin_xyz="0.0 0.0 ${f10_height}"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <xacro:bioloid_f10_fixed
+        prefix="${prefix}"
+        parent="arm_shoulder_F10_1_link"
+        name="arm_shoulder_F10_2"
+        joint_origin_xyz="0.0 0.0 ${f10_height}"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Bracket F3 fijo al final del segmento del hombro.
+         Sirve de acople estructural hacia el servo del codo. -->
+    <xacro:bioloid_f3_fixed
+        prefix="${prefix}"
+        parent="arm_shoulder_F10_2_link"
+        name="arm_shoulder_F3_0"
+        joint_origin_xyz="0.0 0.0 ${f10_height/2}"
+        joint_origin_rpy="0.0 ${pi} 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- ==================== -->
+    <!-- Codo                 -->
+    <!-- ==================== -->
+    <!-- Servo AX-12 del codo. Permite doblar el brazo hacia adelante y atrás.
+         Se conecta al extremo del segmento del hombro. -->
+    <xacro:dynamixel_ax12_fixed
+        prefix="${prefix}"
+        parent="arm_shoulder_F3_0_link"
+        name="arm_elbow_flex_servo"
+        joint_origin_xyz="0.0 0.0 ${-ax12_height-f10_height+0.001}"
+        joint_origin_rpy="0.0 ${pi} 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Bracket F4 giratorio del codo.
+         Define el rango de flexión: -139° a 139°. -->
+    <xacro:bioloid_f4_revolute
+        prefix="${prefix}"
+        parent="arm_elbow_flex_servo_link"
+        name="arm_elbow_flex"
+        joint_velocity_limit="${joints_velocity_limit}"
+        joint_lower_limit="${elbow_joint_lower_limit}"
+        joint_upper_limit="${elbow_joint_upper_limit}"
+        joint_origin_xyz="0.0 0.0 0.0"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Tres espaciadores F10 del antebrazo, equivalentes a los del hombro.
+         Forman la longitud del segmento entre el codo y la muñeca. -->
+    <xacro:bioloid_f10_fixed
+        prefix="${prefix}"
+        parent="arm_elbow_flex_link"
+        name="arm_elbow_F10_0"
+        joint_origin_xyz="0.0 0.0 ${f4_height+f10_height/2}"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <xacro:bioloid_f10_fixed
+        prefix="${prefix}"
+        parent="arm_elbow_F10_0_link"
+        name="arm_elbow_F10_1"
+        joint_origin_xyz="0.0 0.0 ${f10_height}"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <xacro:bioloid_f10_fixed
+        prefix="${prefix}"
+        parent="arm_elbow_F10_1_link"
+        name="arm_elbow_F10_2"
+        joint_origin_xyz="0.0 0.0 ${f10_height}"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Bracket F3 fijo al final del antebrazo.
+         Sirve de acople estructural hacia el servo de la muñeca. -->
+    <xacro:bioloid_f3_fixed
+        prefix="${prefix}"
+        parent="arm_elbow_F10_2_link"
+        name="arm_elbow_F3_0"
+        joint_origin_xyz="0.0 0.0 ${f10_height/2}"
+        joint_origin_rpy="0.0 ${pi} 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- ==================== -->
+    <!-- Muñeca               -->
+    <!-- ==================== -->
+    <!-- Servo AX-12 de la muñeca. Permite inclinar el efector final
+         hacia arriba y hacia abajo. -->
+    <xacro:dynamixel_ax12_fixed
+        prefix="${prefix}"
+        parent="arm_elbow_F3_0_link"
+        name="arm_wrist_flex_servo"
+        joint_origin_xyz="0.0 0.0 ${-ax12_height-f10_height+0.001}"
+        joint_origin_rpy="0.0 ${pi} 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Bracket F2 giratorio de la muñeca.
+         Define el rango de inclinación: -98° a 103°. -->
+    <xacro:bioloid_f2_revolute
+        prefix="${prefix}"
+        parent="arm_wrist_flex_servo_link"
+        name="arm_wrist_flex"
+        joint_velocity_limit="${joints_velocity_limit}"
+        joint_lower_limit="${wrist_joint_lower_limit}"
+        joint_upper_limit="${wrist_joint_upper_limit}"
+        joint_origin_xyz="0.0 0.0 0.0"
+        joint_origin_rpy="0.0 0.0 0.0"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Bracket F3 fijo al final de la muñeca.
+         Sirve de plataforma de montaje para el servo del gripper. -->
+    <xacro:bioloid_f3_fixed
+        prefix="${prefix}"
+        parent="arm_wrist_flex_link"
+        name="arm_wrist_F3_0"
+        joint_origin_xyz="0.0 0.0 ${f2_height}"
+        joint_origin_rpy="0 ${pi} ${-pi}"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- ==================== -->
+    <!-- Gripper              -->
+    <!-- ==================== -->
+    <!-- Servo AX-12 del gripper. Acciona la apertura y cierre de los dedos.
+         Está montado horizontalmente al final de la muñeca. -->
+    <xacro:dynamixel_ax12_fixed
+        prefix="${prefix}"
+        parent="arm_wrist_F3_0_link"
+        name="gripper_servo"
+        joint_origin_xyz="0.0 0.0 ${-ax12_width/2}"
+        joint_origin_rpy="${pi/2} ${pi} ${pi/2}"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Placa base del gripper. Es la estructura central que sostiene
+         ambos dedos y se conecta al servo del gripper. -->
+    <xacro:gripper_finger_base
+        prefix="${prefix}"
+        parent="gripper_servo_link"
+        name="gripper_finger_base"
+        joint_origin_xyz="0 ${ax12_width/2} 0.0"
+        joint_origin_rpy="${pi} 0.0 ${pi/2}"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Dedo 1 del gripper (lado izquierdo).
+         Es la articulación prismática activa que controla la apertura. -->
+    <xacro:pincher_finger
+        prefix="${prefix}"
+        parent="gripper_finger_base_link"
+        name="gripper_finger1"
+        joint_origin_xyz="${finger_centre_offset_x} ${finger_centre_offset_y} 0.0"
+        joint_origin_rpy="${pi/2} 0.0 ${pi/2}"
+        collision="${collision}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+
+    <!-- Dedo 2 del gripper (lado derecho).
+         Si mimic_finger_joints=true, imita el movimiento del dedo 1 (simulación).
+         Si mimic_finger_joints=false, se define como articulación independiente (robot real). -->
     <xacro:if value="${mimic_finger_joints}">
-      <xacro:pincher_finger prefix="${prefix}" parent="gripper_finger_base_link" name="gripper_finger2" joint_origin_xyz="${finger_centre_offset_x} ${-finger_centre_offset_y} 0.0" joint_origin_rpy="${pi/2} ${pi} ${pi/2}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}" mimic_joint="${prefix}gripper_finger1_joint"/>
+      <xacro:pincher_finger
+          prefix="${prefix}"
+          parent="gripper_finger_base_link"
+          name="gripper_finger2"
+          joint_origin_xyz="${finger_centre_offset_x} ${-finger_centre_offset_y} 0.0"
+          joint_origin_rpy="${pi/2} ${pi} ${pi/2}"
+          collision="${collision}"
+          gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
+          mimic_joint="${prefix}gripper_finger1_joint"/>
     </xacro:if>
     <xacro:unless value="${mimic_finger_joints}">
-      <xacro:pincher_finger prefix="${prefix}" parent="gripper_finger_base_link" name="gripper_finger2" joint_origin_xyz="${finger_centre_offset_x} ${-finger_centre_offset_y} 0.0" joint_origin_rpy="${pi/2} ${pi} ${pi/2}" collision="${collision}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+      <xacro:pincher_finger
+          prefix="${prefix}"
+          parent="gripper_finger_base_link"
+          name="gripper_finger2"
+          joint_origin_xyz="${finger_centre_offset_x} ${-finger_centre_offset_y} 0.0"
+          joint_origin_rpy="${pi/2} ${pi} ${pi/2}"
+          collision="${collision}"
+          gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
     </xacro:unless>
 
-    <!-- Active joint for the gripper (only required for the real robot) -->
+    <!-- Articulación activa del gripper para ros2_control.
+         Solo se añade cuando el plugin es 'real' (robot físico) o cuando
+         ros2_control está desactivado. En simulación con 'fake' no se necesita. -->
     <xacro:if value="${ros2_control}">
       <xacro:if value="${'real' in '$(arg ros2_control_plugin)'}">
-        <xacro:fake_active_gripper_joint prefix="${prefix}" parent="gripper_finger_base_link" name="gripper" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+        <xacro:fake_active_gripper_joint
+            prefix="${prefix}"
+            parent="gripper_finger_base_link"
+            name="gripper"
+            gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
       </xacro:if>
     </xacro:if>
     <xacro:unless value="${ros2_control}">
-      <xacro:fake_active_gripper_joint prefix="${prefix}" parent="gripper_finger_base_link" name="gripper" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+      <xacro:fake_active_gripper_joint
+          prefix="${prefix}"
+          parent="gripper_finger_base_link"
+          name="gripper"
+          gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
     </xacro:unless>
 
-    <!-- End-effector -->
-    <xacro:phantomx_pincher_virtual_link parent="${prefix}gripper_finger_base_link" link_name="${prefix}end_effector" joint_origin_xyz="${finger_centre_offset_x} 0.0 0.0" joint_origin_rpy="${pi/2} ${-pi/2} ${pi/2}" gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
 
-    <!-- ROS 2 control -->
+    <!-- SUCTION CUP-->
+
+    <!-- Adaptador de ventosa montado en el efector final -->
+    <link name="${prefix}coupling_tool_end_effector_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://phantomx_pincher_description/meshes/DAE/acopleSuctionCupGripper.dae"
+                scale="0.001 0.001 0.001" />
+            </geometry>
+            <material name="gray" />
+        </visual>
+        <collision>
+            <origin xyz="0 -${0.0215/2} 0.0173" rpy="-${PI/2} 0 0"/>
+            <geometry>
+                <mesh filename="package://phantomx_pincher_description/meshes/STL/acopleSuctionCupGripper.stl"
+                scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.013"/> <!-- kg -->
+            <inertia
+                ixx="1.5083e-05"  ixy="0.0"       ixz="5.9e-08"
+                                iyy="2.123e-06" iyz="0.0"
+                                                izz="1.6244e-05"/>
+        </inertial><!-- kg *  m^2 -->
+    </link>
+    <joint name="${prefix}acople_suction_cup_joint" type="fixed">
+        <parent link="${prefix}end_effector"/>
+        <child link="${prefix}coupling_tool_end_effector_link"/>
+        <origin xyz="0.000008282 0 -0.038" rpy="${PI/2} 0 ${PI/2}"/>
+    </joint>
+
+    <!-- ==================== -->
+    <!-- Efector final        -->
+    <!-- ==================== -->
+    <!-- Link virtual que representa el punto de control del efector final (TCP).
+         No tiene geometría; es el punto de referencia que usa MoveIt para
+         calcular la cinemática inversa y planificar movimientos. -->
+    <xacro:phantomx_pincher_virtual_link
+        parent="${prefix}gripper_finger_base_link"
+        link_name="${prefix}end_effector"
+        joint_origin_xyz="${finger_centre_offset_x} 0.0 0.0"
+        joint_origin_rpy="${pi/2} ${-pi/2} ${pi/2}"
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
+        />
+
+    <!-- ==================== -->
+    <!-- ROS 2 Control        -->
+    <!-- ==================== -->
+    <!-- Bloque de configuración del controlador ROS2.
+         Solo se incluye si ros2_control=true. Inyecta las interfaces de
+         hardware (posición/velocidad/esfuerzo) que ROS2 usa para mover
+         las articulaciones, ya sea en simulación (fake) o en el robot real. -->
     <xacro:if value="${ros2_control}">
-      <xacro:ros2_control_phantomx_pincher prefix="${prefix}" plugin="${ros2_control_plugin}" command_interface="${ros2_control_command_interface}"/>
+      <xacro:ros2_control_phantomx_pincher
+          prefix="${prefix}"
+          plugin="${ros2_control_plugin}"
+          command_interface="${ros2_control_command_interface}"/>
     </xacro:if>
+
   </xacro:macro>
 
 </robot>
+<!--
+pkill -f robot_state_publisher; pkill -f rviz2; pkill -f joint_state_publisher; ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/phantomx_pincher.urdf.xacro
+
+ -->

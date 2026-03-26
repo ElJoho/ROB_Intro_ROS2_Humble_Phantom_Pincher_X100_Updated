@@ -1,14 +1,39 @@
 <?xml version="1.0"?>
-<!-- Macros that add Ignition Gazebo plugins for PhantomX Pincher Robot Arm -->
+<!-- Plugin de Ignition Gazebo para el brazo PhantomX Pincher -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!--       -->
-  <!-- Macro -->
-  <!--       -->
+  <!-- ============================================================ -->
+  <!-- Macro: ign_ros2_control                                      -->
+  <!-- Inyecta el plugin de Ignition Gazebo que conecta el          -->
+  <!-- simulador con ros2_control. Sin este plugin, Gazebo no       -->
+  <!-- sabría cómo recibir comandos ni enviar estados de vuelta     -->
+  <!-- a los controladores de ROS2.                                 -->
+  <!--                                                              -->
+  <!-- Este macro está comentado en phantomx_pincher.urdf.xacro     -->
+  <!-- porque Gazebo no se usa en la Raspberry Pi 5. Solo es        -->
+  <!-- relevante si se ejecuta la simulación en un PC con Gazebo.  -->
+  <!--                                                              -->
+  <!-- Parámetros:                                                  -->
+  <!--   controller_parameters : ruta al archivo YAML con la        -->
+  <!--     configuración de los controladores (PID, tipo de         -->
+  <!--     controlador, joints que maneja, etc.). Normalmente       -->
+  <!--     apunta a controllers_position.yaml o similar dentro      -->
+  <!--     del paquete phantomx_pincher_moveit_config.              -->
+  <!-- ============================================================ -->
   <xacro:macro name="ign_ros2_control" params="
    controller_parameters
   ">
+    <!-- Bloque <gazebo> sin referencia a un link específico:
+         el plugin se aplica al modelo completo del robot. -->
     <gazebo>
+      <!-- Plugin ign_ros2_control-system: es el puente entre Ignition
+           Gazebo y ros2_control. Se encarga de:
+           - Leer los estados (posición, velocidad, esfuerzo) de cada
+             joint simulado y publicarlos en las state_interfaces.
+           - Recibir los comandos de las command_interfaces y
+             aplicarlos a los joints del simulador en cada ciclo.
+           El parámetro <parameters> le indica al plugin dónde
+           encontrar el archivo de configuración de controladores. -->
       <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
         <parameters>${controller_parameters}</parameters>
       </plugin>

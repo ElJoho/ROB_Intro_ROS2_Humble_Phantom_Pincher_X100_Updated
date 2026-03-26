@@ -19,7 +19,7 @@
   <!-- ============================================================ -->
   <xacro:property name="default_string"  value=""/>           <!-- Cadena vacía por defecto -->
   <xacro:property name="default_vector3" value="0.0 0.0 0.0"/> <!-- Vector nulo por defecto (xyz o rpy) -->
-
+  <xacro:property name="PI" value="3.141592653589793" />
 
   <!-- ============================================================ -->
   <!-- Macro: phantomx_pincher_link                                 -->
@@ -257,11 +257,15 @@
     joint_origin_xyz
     joint_origin_rpy
     gazebo_preserve_fixed_joint:=true
+    visual_mesh:=none
+    collision_mesh:=none
   ">
     <!-- Crea el link vacío mediante el macro dummy -->
     <xacro:phantomx_pincher_dummy_link
         link_name="${link_name}"
-        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
+        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
+        visual_mesh="${visual_mesh}"
+        collision_mesh="${collision_mesh}"/>
 
     <!-- Joint fijo que posiciona el punto virtual respecto al link padre -->
     <joint name="${link_name}_virtual_joint" type="fixed">
@@ -285,7 +289,10 @@
   <!-- este link con su padre y el joint desaparecería.             -->
   <!-- ============================================================ -->
   <xacro:macro name="phantomx_pincher_dummy_link"
-      params="link_name collision:=false gazebo_preserve_fixed_joint:=false"
+      params="link_name collision:=false gazebo_preserve_fixed_joint:=false
+            visual_mesh:=none
+            collision_mesh:=none
+            "
   >
     <link name="${link_name}">
       <!-- Inercia mínima ficticia: solo se añade cuando Gazebo necesita
@@ -297,7 +304,33 @@
           <inertia ixx="1e-35" iyy="1e-35" izz="1e-35" ixy="0.0" ixz="0.0" iyz="0.0"/>
         </inertial>
       </xacro:if>
+  
+
+    <!-- Visual opcional: solo se añade si se pasa un nombre de malla -->
+    <xacro:unless value="${visual_mesh == 'none'}">
+      <visual>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="package://phantomx_pincher_description/meshes/DAE/${visual_mesh}.dae"
+          scale="0.001 0.001 0.001" />
+        </geometry>
+      </visual>
+    </xacro:unless>
+
+    <!-- Colisión opcional: solo se añade si se pasa un nombre de malla -->
+    <xacro:unless value="${collision_mesh == 'none'}">
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="package://phantomx_pincher_description/meshes/STL/${collision_mesh}.stl"
+          scale="0.001 0.001 0.001" />
+        </geometry>
+      </collision>
+    </xacro:unless>
+
     </link>
+
+  
 
     <!-- Indica a Gazebo que conserve el joint fijo asociado a este link
          y no lo fusione con el link padre durante la conversión a SDF. -->
@@ -310,3 +343,7 @@
   </xacro:macro>
 
 </robot>
+<!--
+pkill -f robot_state_publisher; pkill -f rviz2; pkill -f joint_state_publisher; ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/phantomx_pincher.urdf.xacro
+
+ -->

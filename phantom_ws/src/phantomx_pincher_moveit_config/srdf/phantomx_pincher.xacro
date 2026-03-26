@@ -575,12 +575,14 @@
         caseBaseRobot_link
         zonaRecoleccion_link
         airpump_link
-        manijaTrasera_link
-        manijaDelantera_link
         canecaLateralIzquierda_link
         canecaLateralDerecha_link
         canecaFrontalDerecha_link
         canecaFrontalIzquierda_link
+        soporteCamara_link
+        raspberry_link
+        canastilla_link
+        electronics_link
     -->
 
     <!-- ============================== -->
@@ -591,8 +593,6 @@
     <disable_collisions link1="baseFija_link" link2="caseBaseRobot_link"          reason="Never"/>
     <disable_collisions link1="baseFija_link" link2="zonaRecoleccion_link"        reason="Never"/>
     <disable_collisions link1="baseFija_link" link2="airpump_link"                reason="Never"/>
-    <disable_collisions link1="baseFija_link" link2="manijaTrasera_link"          reason="Never"/>
-    <disable_collisions link1="baseFija_link" link2="manijaDelantera_link"        reason="Never"/>
     <disable_collisions link1="baseFija_link" link2="canecaLateralIzquierda_link" reason="Never"/>
     <disable_collisions link1="baseFija_link" link2="canecaLateralDerecha_link"   reason="Never"/>
     <disable_collisions link1="baseFija_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
@@ -601,8 +601,6 @@
     <!-- caseBaseRobot_link vs others -->
     <disable_collisions link1="caseBaseRobot_link" link2="zonaRecoleccion_link"        reason="Never"/>
     <disable_collisions link1="caseBaseRobot_link" link2="airpump_link"                reason="Never"/>
-    <disable_collisions link1="caseBaseRobot_link" link2="manijaTrasera_link"          reason="Never"/>
-    <disable_collisions link1="caseBaseRobot_link" link2="manijaDelantera_link"        reason="Never"/>
     <disable_collisions link1="caseBaseRobot_link" link2="canecaLateralIzquierda_link" reason="Never"/>
     <disable_collisions link1="caseBaseRobot_link" link2="canecaLateralDerecha_link"   reason="Never"/>
     <disable_collisions link1="caseBaseRobot_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
@@ -610,33 +608,16 @@
 
     <!-- zonaRecoleccion_link vs others -->
     <disable_collisions link1="zonaRecoleccion_link" link2="airpump_link"                reason="Never"/>
-    <disable_collisions link1="zonaRecoleccion_link" link2="manijaTrasera_link"          reason="Never"/>
-    <disable_collisions link1="zonaRecoleccion_link" link2="manijaDelantera_link"        reason="Never"/>
     <disable_collisions link1="zonaRecoleccion_link" link2="canecaLateralIzquierda_link" reason="Never"/>
     <disable_collisions link1="zonaRecoleccion_link" link2="canecaLateralDerecha_link"   reason="Never"/>
     <disable_collisions link1="zonaRecoleccion_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
     <disable_collisions link1="zonaRecoleccion_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
 
     <!-- airpump_link vs others -->
-    <disable_collisions link1="airpump_link" link2="manijaTrasera_link"          reason="Never"/>
-    <disable_collisions link1="airpump_link" link2="manijaDelantera_link"        reason="Never"/>
     <disable_collisions link1="airpump_link" link2="canecaLateralIzquierda_link" reason="Never"/>
     <disable_collisions link1="airpump_link" link2="canecaLateralDerecha_link"   reason="Never"/>
     <disable_collisions link1="airpump_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
     <disable_collisions link1="airpump_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
-
-    <!-- manijaTrasera_link vs others -->
-    <disable_collisions link1="manijaTrasera_link" link2="manijaDelantera_link"        reason="Never"/>
-    <disable_collisions link1="manijaTrasera_link" link2="canecaLateralIzquierda_link" reason="Never"/>
-    <disable_collisions link1="manijaTrasera_link" link2="canecaLateralDerecha_link"   reason="Never"/>
-    <disable_collisions link1="manijaTrasera_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
-    <disable_collisions link1="manijaTrasera_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
-
-    <!-- manijaDelantera_link vs others -->
-    <disable_collisions link1="manijaDelantera_link" link2="canecaLateralIzquierda_link" reason="Never"/>
-    <disable_collisions link1="manijaDelantera_link" link2="canecaLateralDerecha_link"   reason="Never"/>
-    <disable_collisions link1="manijaDelantera_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
-    <disable_collisions link1="manijaDelantera_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
 
     <!-- canecaLateralIzquierda_link vs others -->
     <disable_collisions link1="canecaLateralIzquierda_link" link2="canecaLateralDerecha_link"   reason="Never"/>
@@ -649,23 +630,103 @@
 
     <!-- canecaFrontalDerecha_link vs others -->
     <disable_collisions link1="canecaFrontalDerecha_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
-
-
+    <!-- ......................................................... -->
+    <!-- soporteCamara_link vs others -->
+    <disable_collisions link1="soporteCamara_link" link2="baseFija_link"               reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="caseBaseRobot_link"          reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="zonaRecoleccion_link"        reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="airpump_link"                reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="canecaLateralDerecha_link"   reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="raspberry_link"              reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="canastilla_link"             reason="Never"/>
+    <disable_collisions link1="soporteCamara_link" link2="electronics_link"            reason="Never"/>
+    <!-- raspberry_link vs others -->
+    <disable_collisions link1="raspberry_link" link2="baseFija_link"               reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="caseBaseRobot_link"          reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="zonaRecoleccion_link"        reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="airpump_link"                reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="canecaLateralDerecha_link"   reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="canastilla_link"             reason="Never"/>
+    <disable_collisions link1="raspberry_link" link2="electronics_link"            reason="Never"/>
+    <!-- canastilla_link vs others -->
+    <disable_collisions link1="canastilla_link" link2="baseFija_link"               reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="caseBaseRobot_link"          reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="zonaRecoleccion_link"        reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="airpump_link"                reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="canecaLateralDerecha_link"   reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+    <disable_collisions link1="canastilla_link" link2="electronics_link"            reason="Never"/>
+    <!-- electronics_link vs others -->
+    <disable_collisions link1="electronics_link" link2="baseFija_link"               reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="caseBaseRobot_link"          reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="zonaRecoleccion_link"        reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="airpump_link"                reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="canecaLateralIzquierda_link" reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="canecaLateralDerecha_link"   reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="canecaFrontalDerecha_link"   reason="Never"/>
+    <disable_collisions link1="electronics_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+      <!-- ============================== -->
+      <!-- B) COUPLING SELF COLLISIONS OFF   -->
+      <!-- ============================== -->
+      <!-- coupling_tool_end_effector_link collisions -->
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}end_effector" reason="Adjacent" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}gripper_finger_base_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}gripper_finger1_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}gripper_finger2_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}gripper_servo_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_wrist_flex_servo_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_wrist_flex_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_wrist_F3_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_elbow_flex_servo_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_elbow_flex_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_elbow_F3_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_elbow_F10_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_elbow_F10_1_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_elbow_F10_2_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_shoulder_F10_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_shoulder_F10_1_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_shoulder_F10_2_link" reason="Never" />
+      <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
+        link2="${prefix}arm_shoulder_F3_0_link" reason="Never" />
     <!-- ================================================= -->
-    <!-- B) ARM BASE vs KIT COLLISIONS (OFF)              -->
+    <!-- C) ARM BASE vs KIT COLLISIONS (OFF)              -->
     <!--    Arm base link assumed to be ${prefix}arm_base_link -->
     <!-- ================================================= -->
-
+    <disable_collisions link1="${prefix}arm_base_link" link2="caseBaseRobot_link"         reason="Always"/>
+    <!--
     <disable_collisions link1="${prefix}arm_base_link" link2="baseFija_link"               reason="Never"/>
-    <disable_collisions link1="${prefix}arm_base_link" link2="caseBaseRobot_link"         reason="Never"/>
     <disable_collisions link1="${prefix}arm_base_link" link2="zonaRecoleccion_link"       reason="Never"/>
     <disable_collisions link1="${prefix}arm_base_link" link2="airpump_link"               reason="Never"/>
-    <disable_collisions link1="${prefix}arm_base_link" link2="manijaTrasera_link"         reason="Never"/>
-    <disable_collisions link1="${prefix}arm_base_link" link2="manijaDelantera_link"       reason="Never"/>
     <disable_collisions link1="${prefix}arm_base_link" link2="canecaLateralIzquierda_link" reason="Never"/>
     <disable_collisions link1="${prefix}arm_base_link" link2="canecaLateralDerecha_link"  reason="Never"/>
     <disable_collisions link1="${prefix}arm_base_link" link2="canecaFrontalDerecha_link"  reason="Never"/>
     <disable_collisions link1="${prefix}arm_base_link" link2="canecaFrontalIzquierda_link" reason="Never"/>
+    -->
     <!-- Disable collision between shoulder pan servo and case base on the kit -->
     <disable_collisions
         link1="${prefix}arm_shoulder_pan_servo_link"
@@ -675,3 +736,35 @@
 
   </xacro:macro>
 </robot>
+<!--
+## `<disable_collisions>` en el SRDF                                                                                     
+                                                                                                                           
+  Esta etiqueta le dice a MoveIt que nunca calcule colisiones entre los dos links especificados.                           
+  Es decir, el motor de planificación los ignora completamente como posible fuente de colisión entre sí.                   
+                                                                                                                           
+  El atributo "reason" es solo una etiqueta descriptiva — no cambia el comportamiento en tiempo                            
+  de ejecución. MoveIt desactiva la colisión igual sin importar qué valor tenga. Su propósito                              
+  es documentar por qué se desactivó, para que quien lea el SRDF entienda la decisión.                                     
+                                                                                                                           
+  Valores convencionales de "reason":
+    - "Never"    : Estos links nunca pueden tocarse físicamente por su posición en el robot/kit.                           
+                   Desactivarlos ahorra tiempo de cómputo sin riesgo.                                                      
+    - "Adjacent" : Son links vecinos conectados por un joint, siempre se tocan por definición,                             
+                   así que verificar colisión entre ellos no tiene sentido.                                                
+    - "Default"  : Estaban en colisión en la pose por defecto cuando se generó el SRDF con                                 
+                   Setup Assistant.
+    - "Always"   : Siempre están en colisión en cualquier configuración válida del robot.                                  
+    - "User"     : Desactivado manualmente por el usuario sin otra justificación.                                          
+   
+  Ejemplo de este proyecto:                                                                                                
+    <disable_collisions link1="${prefix}arm_base_link" link2="baseFija_link" reason="Never"/>
+  Significa: la base del brazo y la base fija del kit nunca pueden colisionar entre sí, porque                             
+  el brazo está atornillado encima de baseFija_link y su geometría no se superpone con ella.                               
+  Calcular esa colisión sería trabajo desperdiciado en cada ciclo de planificación.                                        
+                                                                                                                           
+  Por qué importa desactivarlas:                                                                                           
+  MoveIt verifica colisiones entre todos los pares de links en cada paso del planificador.
+  En un robot con 20 links eso son potencialmente 190 pares por verificar. Desactivar los pares                            
+  que geométricamente nunca pueden colisionar reduce drásticamente ese número y hace la                                    
+  planificación más rápida.
+  -->
