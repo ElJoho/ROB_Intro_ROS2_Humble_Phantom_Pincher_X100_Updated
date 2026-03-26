@@ -359,9 +359,6 @@
           gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"/>
     </xacro:unless>
 
-
-    <!-- SUCTION CUP-->
-
     <!-- Adaptador de ventosa montado en el efector final -->
     <link name="${prefix}coupling_tool_end_effector_link">
         <visual>
@@ -370,7 +367,7 @@
                 <mesh filename="package://phantomx_pincher_description/meshes/DAE/acopleSuctionCupGripper.dae"
                 scale="0.001 0.001 0.001" />
             </geometry>
-            <material name="gray" />
+            <material name="blue" />
         </visual>
         <collision>
             <origin xyz="0 -${0.0215/2} 0.0173" rpy="-${PI/2} 0 0"/>
@@ -395,7 +392,39 @@
         <origin xyz="0.000008282 0 -0.038" rpy="${PI/2} 0 ${PI/2}"/>
     </joint>
 
-    <!-- ==================== -->
+    <!-- suction cup link and joint-->
+    <link name="${prefix}suction_cup_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://phantomx_pincher_description/meshes/DAE/suctionCupGripper.dae"
+                scale="0.001 0.001 0.001" />
+            </geometry>
+            <material name="blue" />
+        </visual>
+        <collision>
+            <origin xyz="-0.0585 0.010 -0.024" rpy="${PI/2} 0 0"/>
+            <geometry>
+                <mesh filename="package://phantomx_pincher_description/meshes/STL/suctionCupGripper.stl"
+                scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+
+        <inertial>
+            <origin xyz="-0.077757 -0.027995 0.000" rpy="0 0 0"/>
+            <mass value="0.025"/> <!-- kg -->
+            <inertia
+                ixx="0.000005868"  ixy="-0.000007410"  ixz="0.000000000"
+                                iyy="0.000021405"   iyz="0.000000000"
+                                                    izz="0.000026615"/>
+        </inertial><!-- kg *  m^2 -->
+    </link>
+    <joint name="${prefix}suction_cup_joint" type="fixed">
+        <parent link="${prefix}coupling_tool_end_effector_link"/>
+        <child link="${prefix}suction_cup_link"/>
+        <origin xyz="0 -0.01075 0.049" rpy="0 0 -${PI/2}"/>
+    </joint>
+    <!-- ====================  ${0.0115 / 2}-->
     <!-- Efector final        -->
     <!-- ==================== -->
     <!-- Link virtual que representa el punto de control del efector final (TCP).

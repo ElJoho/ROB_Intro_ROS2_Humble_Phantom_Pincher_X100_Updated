@@ -713,8 +713,51 @@
         link2="${prefix}arm_shoulder_F10_2_link" reason="Never" />
       <disable_collisions link1="${prefix}coupling_tool_end_effector_link"
         link2="${prefix}arm_shoulder_F3_0_link" reason="Never" />
+
+<!-- ============================== -->
+      <!-- C) Suction Cup SELF COLLISIONS OFF   -->
+      <!-- ============================== -->
+      <!-- suction_cup_link collisions -->
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}coupling_tool_end_effector_link" reason="Adjacent" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}end_effector" reason="Adjacent" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}gripper_finger_base_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}gripper_finger1_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}gripper_finger2_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}gripper_servo_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_wrist_flex_servo_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_wrist_flex_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_wrist_F3_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_elbow_flex_servo_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_elbow_flex_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_elbow_F3_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_elbow_F10_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_elbow_F10_1_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_elbow_F10_2_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_shoulder_F10_0_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_shoulder_F10_1_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_shoulder_F10_2_link" reason="Never" />
+      <disable_collisions link1="${prefix}suction_cup_link"
+        link2="${prefix}arm_shoulder_F3_0_link" reason="Never" />
     <!-- ================================================= -->
-    <!-- C) ARM BASE vs KIT COLLISIONS (OFF)              -->
+    <!-- D) ARM BASE vs KIT COLLISIONS (OFF)              -->
     <!--    Arm base link assumed to be ${prefix}arm_base_link -->
     <!-- ================================================= -->
     <disable_collisions link1="${prefix}arm_base_link" link2="caseBaseRobot_link"         reason="Always"/>
