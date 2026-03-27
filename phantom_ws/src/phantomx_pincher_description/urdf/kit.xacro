@@ -453,6 +453,8 @@ sudo apt install ros-jazzy-urdf-tutorial
 ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/kit.xacro
 
 ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/kit.xacro ; pkill -f rviz2 ; pkill -f robot_state_publisher ; pkill -f joint_state_publisher
+
+ros2 launch urdf_tutorial display.launch.py model:=/home/unpi/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws/src/phantomx_pincher_description/urdf/phantomx_pincher.urdf.xacro 
   -->
 
 </robot>
