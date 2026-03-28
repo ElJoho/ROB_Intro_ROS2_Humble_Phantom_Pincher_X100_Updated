@@ -5,7 +5,7 @@
   <!--       -->
   <!-- Macro -->
   <!--       -->
-  <xacro:macro name="phantomx_pincher" params="prefix:=${prefix} use_real_gripper:=true">
+  <xacro:macro name="phantomx_pincher" params="prefix:=${prefix} use_real_gripper:=true use_suction_cup:=false">
 
     <group name="arm">
       <chain base_link="${prefix}arm_base_link" tip_link="${prefix}end_effector" />
@@ -15,8 +15,14 @@
       <joint name="${prefix}gripper_finger2_joint" />
     </group>
 
-    <end_effector name="${prefix}end_effector" parent_link="${prefix}gripper_finger_base_link"
-      group="gripper" parent_group="arm" />
+    <xacro:unless value="${use_suction_cup}">
+      <end_effector name="${prefix}end_effector" parent_link="${prefix}gripper_finger_base_link"
+        group="gripper" parent_group="arm" />
+    </xacro:unless>
+    <xacro:if value="${use_suction_cup}">
+      <end_effector name="${prefix}end_effector" parent_link="${prefix}end_effector"
+        group="gripper" parent_group="arm" />
+    </xacro:if>
 
     <virtual_joint name="${prefix}base_link_joint" type="fixed" parent_frame="world"
       child_link="${prefix}base_link" />
@@ -717,6 +723,7 @@
 <!-- ============================== -->
       <!-- C) Suction Cup SELF COLLISIONS OFF   -->
       <!-- ============================== -->
+      <xacro:if value="${use_suction_cup}">
       <!-- suction_cup_link collisions -->
       <disable_collisions link1="${prefix}suction_cup_link"
         link2="${prefix}coupling_tool_end_effector_link" reason="Adjacent" />
@@ -756,6 +763,7 @@
         link2="${prefix}arm_shoulder_F10_2_link" reason="Never" />
       <disable_collisions link1="${prefix}suction_cup_link"
         link2="${prefix}arm_shoulder_F3_0_link" reason="Never" />
+      </xacro:if>
     <!-- ================================================= -->
     <!-- D) ARM BASE vs KIT COLLISIONS (OFF)              -->
     <!--    Arm base link assumed to be ${prefix}arm_base_link -->

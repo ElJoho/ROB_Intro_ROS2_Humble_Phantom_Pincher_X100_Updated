@@ -93,6 +93,11 @@
        links con joints fijos sean entidades independientes en Gazebo. -->
   <xacro:arg name="gazebo_preserve_fixed_joint" default="false"/>
 
+  <!-- Activa o desactiva el link y joint de la ventosa (suction cup).
+       true  → se incluye la ventosa en el modelo
+       false → solo queda el acople (coupling_tool_end_effector_link) -->
+  <xacro:arg name="use_suction_cup" default="false"/>
+
 
   <!-- ============================================================ -->
   <!-- Propiedades internas                                         -->
@@ -151,7 +156,8 @@
       ros2_control_plugin="$(arg ros2_control_plugin)"
       ros2_control_command_interface="$(arg ros2_control_command_interface)"
       mimic_finger_joints="$(arg mimic_finger_joints)"
-      gazebo_preserve_fixed_joint="$(arg gazebo_preserve_fixed_joint)"/>
+      gazebo_preserve_fixed_joint="$(arg gazebo_preserve_fixed_joint)"
+      use_suction_cup="$(arg use_suction_cup)"/>
 
   <!-- ============================================================ -->
   <!-- Montaje alternativo (comentado)                              -->

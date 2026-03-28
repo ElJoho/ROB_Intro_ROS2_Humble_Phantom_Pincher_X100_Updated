@@ -38,6 +38,7 @@ def generate_launch_description():
     )
     mimic_finger_joints = LaunchConfiguration("mimic_finger_joints")
     gazebo_preserve_fixed_joint = LaunchConfiguration("gazebo_preserve_fixed_joint")
+    use_suction_cup = LaunchConfiguration("use_suction_cup")
     manage_controllers = LaunchConfiguration("manage_controllers")
     enable_servo = LaunchConfiguration("enable_servo")
     enable_rviz = LaunchConfiguration("enable_rviz")
@@ -77,6 +78,9 @@ def generate_launch_description():
             " ",
             "gazebo_preserve_fixed_joint:=",
             gazebo_preserve_fixed_joint,
+            " ",
+            "use_suction_cup:=",
+            use_suction_cup,
         ]
     )
     # robot_description = {"robot_description": _robot_description_xml}
@@ -116,7 +120,9 @@ def generate_launch_description():
                     "' == 'real'",
                 ]
             ),
-
+            " ",
+            "use_suction_cup:=",
+            use_suction_cup,
         ]
     )
 
@@ -347,9 +353,19 @@ def generate_launch_description():
     ]
 
     # Add nodes for loading controllers
-    # NOTE: joint_state_broadcaster is already started by ros2_control_node
-    # from controllers_position.yaml, so we do NOT spawn it here to avoid
-    # "can not be configured from 'active' state" errors.
+    # Spawn joint_state_broadcaster when manage_controllers is true (standalone mode).
+    # When included from phantomx_pincher.launch.py, manage_controllers=false so this
+    # is skipped — the parent launch file spawns joint_state_broadcaster itself.
+    nodes.append(
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            output="log",
+            arguments=["joint_state_broadcaster", "--ros-args", "--log-level", log_level],
+            parameters=[{"use_sim_time": use_sim_time}],
+            condition=IfCondition(manage_controllers),
+        )
+    )
     for controller in moveit_controller_manager_yaml["controller_names"]:
         nodes.append(
             Node(
@@ -453,6 +469,11 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             "mimic_finger_joints",
             default_value="false",
             description="Flag to enable mimicking of the finger joints.",
+        ),
+        DeclareLaunchArgument(
+            "use_suction_cup",
+            default_value="false",
+            description="Flag to enable the suction cup link and joint.",
         ),
         # Gazebo
         DeclareLaunchArgument(

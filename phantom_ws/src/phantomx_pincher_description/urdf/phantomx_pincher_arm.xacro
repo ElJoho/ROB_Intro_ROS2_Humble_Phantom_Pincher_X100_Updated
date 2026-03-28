@@ -70,6 +70,7 @@
     ros2_control_command_interface:=position
     mimic_finger_joints:=false
     gazebo_preserve_fixed_joint:=false
+    use_suction_cup:=false
   ">
 
     <!-- Link base del brazo: punto de anclaje al resto del robot -->
@@ -393,6 +394,7 @@
     </joint>
 
     <!-- suction cup link and joint-->
+    <xacro:if value="${use_suction_cup}">
     <link name="${prefix}suction_cup_link">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -424,6 +426,7 @@
         <child link="${prefix}suction_cup_link"/>
         <origin xyz="0 -0.01075 0.049" rpy="0 0 -${PI/2}"/>
     </joint>
+    </xacro:if>
     <!-- ====================  ${0.0115 / 2}-->
     <!-- Efector final        -->
     <!-- ==================== -->
@@ -432,28 +435,31 @@
          calcular la cinemática inversa y planificar movimientos. -->
     <!-- ==================== -->
     <!-- TCP garra, gripper   -->
+    <!-- Activo cuando use_suction_cup=false -->
     <!-- ==================== -->
-    <!-- TCP garra, gripper-->
-    <xacro:phantomx_pincher_virtual_link
-        parent="${prefix}gripper_finger_base_link"
-        link_name="${prefix}end_effector"
-        joint_origin_xyz="${finger_centre_offset_x} 0.0 0.0"
-        joint_origin_rpy="${pi/2} ${-pi/2} ${pi/2}"
-        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
+    <xacro:unless value="${use_suction_cup}">
+        <xacro:phantomx_pincher_virtual_link
+            parent="${prefix}gripper_finger_base_link"
+            link_name="${prefix}end_effector"
+            joint_origin_xyz="${finger_centre_offset_x} 0.0 0.0"
+            joint_origin_rpy="${pi/2} ${-pi/2} ${pi/2}"
+            gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
+            />
+    </xacro:unless>
+
+    <!-- ==================== -->
+    <!-- TCP ventosa          -->
+    <!-- Activo cuando use_suction_cup=true --><!---0.114 0 -0.029-->
+    <!-- ==================== -->
+    <xacro:if value="${use_suction_cup}">
+        <xacro:phantomx_pincher_virtual_link
+            parent="${prefix}suction_cup_link"
+            link_name="${prefix}end_effector"
+            joint_origin_xyz="-0.114 0 -0.029"
+            joint_origin_rpy="0 -${PI/2} 0"
+            gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
         />
-    
-    <!-- ==================== -->
-    <!-- TCP ventosa   -->
-    <!-- ==================== -->
-    <!-- TCP suction cop, ventosa 
-    <xacro:phantomx_pincher_virtual_link
-        parent="${prefix}suction_cup_link"
-        link_name="${prefix}end_effector"
-        joint_origin_xyz="-0.114 0 -0.029"
-        joint_origin_rpy="${pi/2} ${-pi/2} ${pi/2}"
-        gazebo_preserve_fixed_joint="${gazebo_preserve_fixed_joint}"
-    />
-    -->
+    </xacro:if>
     <!-- ==================== -->
     <!-- ROS 2 Control        -->
     <!-- ==================== -->

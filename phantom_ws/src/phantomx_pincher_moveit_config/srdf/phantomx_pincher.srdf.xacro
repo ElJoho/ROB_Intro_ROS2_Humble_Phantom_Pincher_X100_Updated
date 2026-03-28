@@ -19,10 +19,13 @@
   <!-- Prefix for all entities -->
   <xacro:arg name="use_real_gripper" default="true" />
 
+  <!-- Enable or disable the suction cup link and joint -->
+  <xacro:arg name="use_suction_cup" default="false" />
+
 
   <!--       -->
   <!-- Robot -->
   <!--       -->
-  <xacro:phantomx_pincher prefix="$(arg prefix)" use_real_gripper="$(arg use_real_gripper)" />
+  <xacro:phantomx_pincher prefix="$(arg prefix)" use_real_gripper="$(arg use_real_gripper)" use_suction_cup="$(arg use_suction_cup)" />
 
 </robot>

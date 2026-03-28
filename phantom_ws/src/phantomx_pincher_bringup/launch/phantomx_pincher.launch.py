@@ -13,6 +13,7 @@ def generate_launch_description():
     #  Choose SIM vs REAL explicitly
     # -------------------------------------------------------------------------
     use_real_robot = LaunchConfiguration("use_real_robot")
+    use_suction_cup = LaunchConfiguration("use_suction_cup")
 
     use_real_robot_arg = DeclareLaunchArgument(
         "use_real_robot",
@@ -21,6 +22,15 @@ def generate_launch_description():
             "If 'true', connect MoveIt to the real PhantomX via "
             "pincher_control/follow_joint_trajectory. "
             "If 'false', use ros2_control simulation."
+        ),
+    )
+
+    use_suction_cup_arg = DeclareLaunchArgument(
+        "use_suction_cup",
+        default_value="false",
+        description=(
+            "If 'true', include the suction cup link and joint in the robot model. "
+            "If 'false' (default), only the coupling adapter is present."
         ),
     )
 
@@ -47,20 +57,19 @@ def generate_launch_description():
 
     # Robot description string (xacro → URDF)
     robot_description = ParameterValue(
-        Command(["xacro ", urdf_path]),
+        Command(["xacro ", urdf_path, " use_suction_cup:=", use_suction_cup]),
         value_type=str,
     )
 
     # Semantic robot description (SRDF → XML string)
-    # Use the pre-generated .srdf file instead of the .srdf.xacro
     srdf_path = PathJoinSubstitution([
         FindPackageShare("phantomx_pincher_moveit_config"),
         "srdf",
-        "phantomx_pincher.srdf",  # NOTE: .srdf, NOT .srdf.xacro
+        "phantomx_pincher.srdf.xacro",
     ])
 
     robot_description_semantic = ParameterValue(
-        Command(["cat ", srdf_path]),
+        Command(["xacro ", srdf_path, " name:=phantomx_pincher use_suction_cup:=", use_suction_cup]),
         value_type=str,
     )
 
@@ -153,6 +162,7 @@ def generate_launch_description():
             "enable_rviz": "true",
             # Optional: keep Servo disabled by default
             "enable_servo": "false",
+            "use_suction_cup": use_suction_cup,
         }.items(),
         condition=UnlessCondition(use_real_robot),
     )
@@ -182,6 +192,7 @@ def generate_launch_description():
             "enable_rviz": "true",
             # Optional: keep Servo disabled by default
             "enable_servo": "false",
+            "use_suction_cup": use_suction_cup,
         }.items(),
         condition=IfCondition(use_real_robot),
     )
@@ -191,6 +202,7 @@ def generate_launch_description():
     # -------------------------------------------------------------------------
     return LaunchDescription([
         use_real_robot_arg,
+        use_suction_cup_arg,
 
         # Common
         robot_state_publisher_node,

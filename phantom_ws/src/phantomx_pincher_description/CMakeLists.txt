@@ -12,6 +12,15 @@ install(PROGRAMS
     DESTINATION lib/${PROJECT_NAME}
 )
 
+# Force reinstall when any xacro file changes
+file(GLOB_RECURSE XACRO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/urdf/*.xacro")
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xacro_stamp.txt
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/xacro_stamp.txt
+    DEPENDS ${XACRO_FILES}
+)
+add_custom_target(check_xacro_files ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/xacro_stamp.txt)
+
 # Install directories
 install(DIRECTORY config launch phantomx_pincher phantomx_pincher/meshes rviz urdf DESTINATION share/${PROJECT_NAME})
 
