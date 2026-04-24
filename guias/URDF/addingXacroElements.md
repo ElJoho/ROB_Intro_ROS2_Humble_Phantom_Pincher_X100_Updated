@@ -1,6 +1,82 @@
 # Añadiendo elementos a archivos XACRO
 
+
+**Autor:** Johan Alejandro López Arias ([@ElJoho](https://github.com/ElJoho))
+
+
 Guía de procedimientos para añadir links y joints con distintas combinaciones de tags visuales y de colisión en el proyecto PhantomX Pincher ROS2 (archivos `kit.xacro` y `phantomx_pincher_arm.xacro`).
+
+<summary>📺 Serie de videos en YouTube (10 episodios)</summary>
+
+<details>
+<summary><b>Ep. 1</b> — <a href="https://www.youtube.com/watch?v=12hgfwh_EL4">Introducción a URDF</a></summary>
+
+Video introductorio a URDF y xacro en el contexto del kit Phantom X Pincher, explicando la estructura del archivo `kit.xacro` (links, joints, tags `<visual>` y `<collision>`) y la diferencia entre los archivos DAE (malla con información visual) y STL (malla geométrica pura), incluyendo el detalle de la escala `0.001` para convertir de milímetros de Inventor a los metros que espera RViz. Se muestra la distinción clave entre el "mundo visual" (bonito pero ignorado por el planificador) y el "mundo de las colisiones" (el que realmente importa para el movimiento del robot), usando RViz con el launch del paquete `urdf_tutorial` y ajustando el archivo de configuración `fixed.rviz` (cambiar `base_link` por `world_link`, alfa a 1, escala del marcador a 0.1). Finaliza mostrando cómo usar rotaciones del `world_link` para simular vistas ortogonales en RViz y corrigiendo en vivo un problema de dimensionamiento de la cámara y su acople, dejando el terreno preparado para los siguientes videos donde se añadirán nuevos elementos al kit.
+
+</details>
+
+<details>
+<summary><b>Ep. 2</b> — <a href="https://www.youtube.com/watch?v=lNkqghHquOs">Un elemento con 1 tag visual y 1 tag de colisión</a></summary>
+
+Video que muestra el flujo completo para añadir a `kit.xacro` un link con un único tag `<visual>` y un único `<collision>`, usando como ejemplo el ensamble de la Raspberry Pi sobre la base. Se recorren los pasos clave: copiar la estructura base cambiando siempre el nombre del link y del joint para evitar errores, referenciar el archivo DAE con su material, asociar largo/ancho/alto de la figura a los ejes X/Y/Z de RViz (que difieren de la orientación de Inventor), y obtener las traslaciones del origen creando un punto por intersección de tres planos en Inventor y sumando los 9 mm de grosor de la base en Z. Se explica además que las rotaciones conviene hacerlas en el tag `<visual>` (y no en el joint) para que este último no arrastre el tag de colisión, cerrando con la verificación en RViz de que la caja de colisión contiene correctamente al objeto visual y aclarando que el orden de los pasos es una guía flexible, no obligatoria.
+
+</details>
+
+<details>
+<summary><b>Ep. 3</b> — <a href="https://www.youtube.com/watch?v=uBKfdnKrj4s">Un elemento con 1 tag visual y varios tags de colisión</a></summary>
+
+Video que muestra cómo definir en `kit.xacro` un link con un único tag `<visual>` pero varios tags `<collision>`, usando como ejemplo la canastilla: se importa el archivo STL (más liviano que un DAE al ser una pieza de un solo color) asignando el material directamente desde xacro, y se calculan las traslaciones del origen del joint midiendo distancias en Inventor mediante puntos de intersección de tres planos. Las colisiones se aproximan con ocho cajas primitivas (dos paredes largas, dos cortas y cuatro prismas rotados 45° en Z para cubrir las esquinas redondeadas), calculando cuidadosamente sus dimensiones y desplazamientos teniendo en cuenta que el origen de cada caja queda en su centro geométrico, por lo que la altura se divide entre dos. Se compara brevemente contra la alternativa de usar el STL completo como colisión mediante el tag `<mesh>`, descartándola por el sobrecosto computacional de geometría innecesaria, y se enfatiza la importancia de nombrar cada tag de colisión con un comentario para facilitar futuras ediciones.
+
+</details>
+
+<details>
+<summary><b>Ep. 4</b> — <a href="https://www.youtube.com/watch?v=ETsq8yryuyo">1 elemento con varios tags visuales y varios tags de colisión</a></summary>
+
+Video que muestra cómo definir un mismo link con varios tags `<visual>` y uno o más tags `<collision>` en `kit.xacro`, tomando como ejemplo el link `electronic_link` que contiene los ensambles DAE de la Arbotix y la multitoma dentro de un único bloque de colisión tipo caja. Se explica por qué conviene dejar el origen del joint en cero (alineado con la base) y trasladar cada elemento visual respecto al origen del link padre, midiendo en Inventor los desplazamientos de cada pieza con puntos de intersección de tres planos y sumando el grosor de 9 mm de la base. Para el bloque de colisión se calculan sus dimensiones (largo, ancho y altura de 151 mm) a partir del layout de la plataforma, verificando finalmente en RViz que todo queda alineado con los tornillos y contenido dentro de la caja de colisiones, y cerrando con instrucciones para el laboratorio sobre cómo personalizar la canastilla con el número del robot y los nombres del equipo.
+
+</details>
+
+<details>
+<summary><b>Ep. 5</b> — <a href="https://www.youtube.com/watch?v=gWCVxNBr8pw">Desactivando y activando colisiones de kit.xacro</a></summary>
+
+Introducción al manejo de colisiones en MoveIt editando los archivos del paquete `phantomx_pincher_moveit_config` (carpeta `srdf`), eliminando primero las referencias a los links obsoletos `manija_trasera_link` y `manija_delantera_link` que ahora forman parte de la base fija. Se explica la estructura del tag `disable_collisions` con sus razones convencionales (`never`, `adjacent`, `default`, `always`, `user`) y se añaden las desactivaciones necesarias para los nuevos links de Raspberry Pi, electrónica y soporte de cámara para evitar falsos positivos por contactos marginales. Cierra compilando con `colcon` desde la raíz del workspace y verificando en MoveIt que el modelo carga correctamente, dejando visible el acople del efector final que se abordará en los siguientes videos.
+
+</details>
+
+<details>
+<summary><b>Ep. 6</b> — <a href="https://www.youtube.com/watch?v=ELiEouOz8Vs">Convertir archivos IPT de Inventor a DAE con Blender 4.2 LTS</a></summary>
+
+Video corto que muestra el flujo para convertir piezas de Inventor a archivos DAE (colada) usando Blender 4.2 LTS como paso intermedio, exportando primero desde Inventor al formato OBJ (junto con su MTL). Se aclara que debe usarse específicamente Blender 4.2 LTS o versiones anteriores porque el soporte de exportación a DAE fue descontinuado en versiones posteriores, y que al importar el OBJ es necesario seleccionar también el archivo MTL para conservar los materiales. El proceso se repite para dos piezas (el gripper y el acople), dejando listos los archivos DAE que se usarán en el siguiente video para integrar el acople al brazo robótico.
+
+</details>
+
+<details>
+<summary><b>Ep. 7</b> — <a href="https://www.youtube.com/watch?v=UJGw7AIaVZ0">Agregar elementos al brazo con phantomx_pincher_arm.xacro</a></summary>
+
+Video que explica cómo añadir un nuevo elemento (el acople de la ventosa) editando directamente `phantomx_pincher_arm.xacro`, resaltando las diferencias frente a `kit.xacro`: uso de macros, manejo obligatorio de prefijos en nombres y referencias padre/hijo, y reutilización de los colores ya definidos sin redeclararlos. Se muestra cómo obtener los momentos de inercia y centro de masa desde Inventor (convirtiendo de mm² a m²), identificar rotaciones usando los frames en RViz y calcular la traslación del joint restando las posiciones publicadas en `/tf` entre el servo padre y el acople. Incluye la solución a errores típicos de tags mal cerrados junto al flujo de `colcon build`, `source` y ejecución del launch, cerrando con la verificación visual de que la colisión contiene al objeto visual.
+
+</details>
+
+<details>
+<summary><b>Ep. 8</b> — <a href="https://www.youtube.com/watch?v=71B-XrqGfXc">Desactivar colisiones de elementos nuevos en brazo robótico</a></summary>
+
+Segunda parte del proceso de añadir un acople al brazo robótico, enfocada en desactivar las colisiones entre el nuevo link y los elementos cercanos del efector final editando los archivos xacro y SRDF del paquete `phantom_x_pincher_moveit_config`. Se muestra cómo identificar qué links pueden entrar en contacto usando RViz (activando y desactivando su visualización) y cómo aplicar el tag `disable_collisions` con el prefijo correcto, incluyendo un reemplazo manual del prefijo en el SRDF debido a un bug de compilación no resuelto. Finalmente se verifica en MoveIt que el planificador genera trayectorias sin reportar colisiones, dejando lista la base para añadir la ventosa en el siguiente video.
+
+</details>
+
+<details>
+<summary><b>Ep. 9</b> — <a href="https://www.youtube.com/watch?v=6Z_Q9niSPAY">Agregar suction cup a phantomx_pincher_arm.xacro</a></summary>
+
+Video largo y sin guion donde se añade la ventosa (suction cup) al archivo `phantomx_pincher_arm.xacro`, replicando el proceso del acople anterior pero usándolo ahora como link padre del nuevo joint. Se muestran en vivo los errores típicos y cómo corregirlos: malas rotaciones del joint interpretando el marco de referencia equivocado, cálculo de las traslaciones tomando medidas desde Inventor, y ajuste del objeto de colisión (rotación y traslación) cuando el origen del STL exportado no coincide con el del archivo DAE. Cierra desactivando las colisiones entre la ventosa y la garra editando tanto el xacro como el SRDF de `phantomx_pincher_moveit_config`, y verificando en MoveIt que el modelo completo planea trayectorias sin problemas.
+
+</details>
+
+<details>
+<summary><b>Ep. 10</b> — <a href="https://www.youtube.com/watch?v=GsfinJpJwyY">Cambiar posición del TCP</a></summary>
+
+Video de cierre de la serie de URDF donde se explica cómo cambiar el origen del TCP en el archivo xacro del Phantom X Pincher, manejando dos TCPs (con y sin ventosa) mediante un condicional controlado por la variable `use_suction`. Se muestra cómo obtener las coordenadas del nuevo TCP desde Inventor y ajustar la rotación en Y para conservar la orientación del marco del efector final, además de corregir un error previo sobre el link padre del acople de la ventosa. Incluye una prueba práctica moviendo el robot con los comandos de MoveIt para verificar que el TCP se desplaza a la posición correcta.
+
+</details>
 
 ---
 
