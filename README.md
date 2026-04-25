@@ -22,7 +22,15 @@ Para observar la pantalla de la Raspberry Pi necesita realizar una conexión usa
 
 Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry Pi usando una extensión de SSH. El proceso para realizar esto se encuentra en la siguiente guía:
 
+
 [Configuración SSH en VS Code](guias/Setup/sshVScode.md)
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=30KEEl1uhBM">Como conectarse a las raspberry pi usando NoMachine</a>
+  </summary>
+</details>
+<br>
 
 ### Setup de OpenCV
 

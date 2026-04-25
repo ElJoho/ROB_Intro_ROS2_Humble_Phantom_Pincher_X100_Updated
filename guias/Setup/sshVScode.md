@@ -1,5 +1,16 @@
 # Conexión Remota a la Raspberry Pi con VS Code via SSH
 
+
+**Autor:** Johan Alejandro López Arias ([@ElJoho](https://github.com/ElJoho))
+
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=30KEEl1uhBM">Como conectarse a las raspberry pi usando NoMachine</a>
+  </summary>
+</details>
+<br>
+
 Esta guía explica cómo conectarse a la Raspberry Pi desde VS Code en tu PC usando SSH, cómo transferir archivos, y cómo usar la terminal de la Pi directamente desde VS Code.
 
 ---
