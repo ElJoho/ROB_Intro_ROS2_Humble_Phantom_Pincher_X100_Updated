@@ -1,5 +1,18 @@
 # PhantomX Pincher — Referencia de Comandos de Movimiento
 
+
+**Autor:** Johan Alejandro López Arias ([@ElJoho](https://github.com/ElJoho))
+
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=CDmSgoLtIdU">Como mover el robot (Mottion commands)</a>
+  </summary>
+</details>
+<br>
+
+---
+
 > Generado a partir del análisis del workspace de los paquetes:
 > `phantomx_pincher`, `phantomx_pincher_bringup`, `pincher_control`,
 > `phantomx_pincher_moveit_config`, `phantomx_pincher_commander_cpp`
