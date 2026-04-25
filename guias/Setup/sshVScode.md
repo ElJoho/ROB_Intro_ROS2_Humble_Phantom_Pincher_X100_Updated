@@ -6,7 +6,7 @@
 
 <details>
   <summary>
-    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=30KEEl1uhBM">Como conectarse a las raspberry pi usando NoMachine</a>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=o4gKgJH7CwI">Como usar visual studio code y remote SSH con raspberry pi</a>
   </summary>
 </details>
 <br>
