@@ -7,6 +7,26 @@
 
 ---
 
+## Introduccion al Kit fisico
+
+Se recomienda ver los siguientes videos introductorios al kit fisico:
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=fg1AXdiOE6Y">Introducción al Kit fisico del robot</a>
+  </summary>
+</details>
+<br>
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=txS73u_q9bY">Como organizar el Kit en su contenedor</a>
+  </summary>
+</details>
+<br>
+
+---
+
 ## Setup
 
 Para observar la guía de cómo hacer la instalación de ROS2 en Ubuntu 24.04 LTS puede dirigirse al siguiente archivo:
@@ -26,6 +46,18 @@ Para observar la pantalla de la Raspberry Pi necesita realizar una conexión usa
 </details>
 <br>
 
+### Probar el funcionamiento del robot usando Dynamixel Wizard 2.0
+
+Para probar el funcionamiento del robot se puede usar el programa Dynamixel Wizard que ya viene instalado en la raspberry pi. No se cuenta con una guia pero si con un video mostrando el funcionamiento del programa y como se prueba el robot con Dynamixel Wizard 2.0
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a https://www.youtube.com/watch?v=VNw8zVJwRWo">Como usar Dynamixel Wizard 2.0</a>
+  </summary>
+</details>
+<br>
+
+
 ### Conexión SSH en VS Code
 
 Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry Pi usando una extensión de SSH. El proceso para realizar esto se encuentra en la siguiente guía:
@@ -39,10 +71,6 @@ Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry P
   </summary>
 </details>
 <br>
-
-### Setup de OpenCV
-
-[Guia: Setup de OpenCV](guias/Setup/setupOpenCV/readme.md)
 
 ---
 
@@ -67,9 +95,7 @@ En la siguiente guia se encuentra una serie de pasos para añadir elementos xacr
 
 Para mover el robot puede leer la guia o ver el video que se muestran a continuacion:
 
-
 [Guia: Comandos de Movimiento](guias/Moveit/MOTION_COMMANDS.md)
-
 
 
 <details>

@@ -110,8 +110,8 @@ Aceptar todas las ventanas y cerrar el Panel de control.
 2. Debe aparecer automáticamente la Raspberry Pi en la lista, identificada como **Ubuntu 24.04 LTS**.
 3. Clic sobre ella e ingresar las credenciales:
 
-   - **Usuario:** `pi`
-   - **Contraseña:** `pi`
+   - **Usuario:** `unpi`
+   - **Contraseña:** `unpi`
 
 4. Marcar la opción **Guardar credenciales**, dar **OK** y se abrirá el escritorio remoto de la Raspberry Pi.
 
@@ -188,10 +188,10 @@ colcon build
 Si tu Raspberry Pi tiene poca RAM (por ejemplo 4 GB), un `colcon build` normal puede consumirla toda y forzar un reinicio. Para evitarlo, limitar el número de núcleos usados durante la compilación:
 
 ```bash
-MAKEFLAGS="-j 2" colcon build
+MAKEFLAGS="-j2" colcon build --parallel-workers 1
 ```
 
-Esto le indica al compilador que use solo 2 núcleos (puedes bajarlo a `-j 1` si sigue siendo demasiado pesado), reduciendo el consumo de RAM.
+Esto le indica al compilador que use solo 2 núcleos (puedes bajarlo a `-j1` si sigue siendo demasiado pesado), reduciendo el consumo de RAM.
 
 > **Tip:** El primer `colcon build` es el más demandante. Las compilaciones posteriores son mucho más rápidas y livianas, ya que `colcon` solo reconstruye lo que cambió.
 
@@ -246,5 +246,5 @@ Dentro de `~/ros2/` encontrarás:
 | OS de la Raspberry | Ubuntu 24.04 LTS |
 | Actualizar repo | `git pull origin main` |
 | Build normal | `colcon build` |
-| Build con RAM limitada | `MAKEFLAGS="-j 2" colcon build` |
+| Build con RAM limitada | `MAKEFLAGS="-j2" colcon build --parallel-workers 1` |
 | Mayúsculas | **Shift + letra** (Caps Lock deshabilitado) |
