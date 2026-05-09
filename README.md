@@ -7,7 +7,9 @@
 
 ---
 
-## Introduccion al Kit fisico
+## Iniciando
+
+### Introduccion al Kit fisico
 
 Se recomienda ver los siguientes videos introductorios al kit fisico:
 
@@ -24,14 +26,6 @@ Se recomienda ver los siguientes videos introductorios al kit fisico:
   </summary>
 </details>
 <br>
-
----
-
-## Setup
-
-Para observar la guía de cómo hacer la instalación de ROS2 en Ubuntu 24.04 LTS puede dirigirse al siguiente archivo:
-
-[Guia: Setup de ROS2](guias/Setup/readme.md)
 
 ### Conexión con Raspberry Pi para ver pantalla
 
@@ -73,6 +67,15 @@ Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry P
 <br>
 
 ---
+
+## Setup
+
+Para observar la guía de cómo hacer la instalación de ROS2 en Ubuntu 24.04 LTS puede dirigirse al siguiente archivo:
+
+[Guia: Setup de ROS2](guias/Setup/readme.md)
+
+---
+## URDF y RVIZ
 
 ### Añadiendo elementos al robot
 

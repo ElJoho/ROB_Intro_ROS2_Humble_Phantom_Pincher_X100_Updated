@@ -31,6 +31,7 @@ setup(
             'template_control_servo = pincher_control.template_control_servo:main',
             'control_servo = pincher_control.control_servo:main',
             'follow_joint_trajectory = pincher_control.follow_joint_trajectory_node:main',
+            'teleop_keyboard = pincher_control.teleop_keyboard:main'
         ],
     },
 )

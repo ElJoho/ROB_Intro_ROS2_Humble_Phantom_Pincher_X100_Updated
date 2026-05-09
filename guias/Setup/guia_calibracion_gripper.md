@@ -1,5 +1,9 @@
 # Guía: Calibración de la Apertura Máxima del Gripper
 
+
+**Autor:** Johan Alejandro López Arias ([@ElJoho](https://github.com/ElJoho))
+
+
 ## Requisitos previos
 
 - El bringup del robot **NO debe estar corriendo** durante este proceso.

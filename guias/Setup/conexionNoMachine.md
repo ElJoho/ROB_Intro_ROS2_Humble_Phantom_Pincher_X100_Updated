@@ -242,7 +242,7 @@ Dentro de `~/ros2/` encontrarás:
 | IP de la Raspberry Pi | `192.168.10.2` |
 | IP del PC (adaptador Ethernet) | `192.168.10.1` |
 | Máscara de subred | `255.255.255.0` |
-| Usuario / contraseña | `pi` / `pi` |
+| Usuario / contraseña | `unpi` / `unpi` |
 | OS de la Raspberry | Ubuntu 24.04 LTS |
 | Actualizar repo | `git pull origin main` |
 | Build normal | `colcon build` |
