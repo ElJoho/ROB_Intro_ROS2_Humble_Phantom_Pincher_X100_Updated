@@ -14,9 +14,9 @@ Continuación de la primera parte sobre publishers y subscribers. Aquí se cubre
 
 ### Scripts asociados
 
-- [ejemplo_teclado.py](guias/ROS2_basics/ejemplo_teclado.py)
-- [ejemplo_deteccion_movimiento.py](guias/ROS2_basics/ejemplo_deteccion_movimiento.py)
-- [ejemplo_mover_robot.py](guias/ROS2_basics/ejemplo_mover_robot.py)
+- [ejemplo_teclado.py](./ejemplo_teclado.py)
+- [ejemplo_deteccion_movimiento.py](./ejemplo_deteccion_movimiento.py)
+- [ejemplo_mover_robot.py](./ejemplo_mover_robot.py)
 
 > **Nota sobre los scripts:** los archivos están en `guias/ROS2_basics/` con fines de referencia, pero en los videos se crean dentro del paquete `pincher_control`. Cuando sigas los videos vas a recrearlos ahí mismo.
 
