@@ -53,7 +53,17 @@ Extiende el subscriber del Video 2 añadiendo la lógica para saber si el robot 
 
 El nodo imprime en consola cuándo el robot arranca y cuándo se detiene.
 
-### Video 5 – Teleop completo: `teleop_keyboard.py`
+### Video 5 – Mover el robot: `ejemplo_mover_robot.py`
+
+Primer nodo que realmente mueve el robot. Combina el publisher del Video 1 con un timer para enviar una secuencia de posiciones predefinidas:
+
+- Cómo publicar en `/named_target` para mover el robot a un estado del SRDF
+- Por qué se usa un tiempo fijo de espera entre posiciones
+- Cómo cerrar el nodo limpiamente cuando la tarea termina (`SystemExit`)
+
+El nodo recorre la lista `SECUENCIA`, publica cada posición y se cierra al terminar.
+
+### Video 6 – Teleop completo: `teleop_keyboard.py`
 
 > El archivo final se encuentra en:
 > `phantom_ws/src/pincher_control/pincher_control/teleop_keyboard.py`
