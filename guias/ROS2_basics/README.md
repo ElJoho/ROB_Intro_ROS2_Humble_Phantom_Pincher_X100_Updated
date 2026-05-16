@@ -1,115 +1,35 @@
-# Guía – Creación de nodos ROS 2 con Python
+# ROS 2 con Python — Índice de la serie
 
-## Objetivo
-
-El objetivo de esta guía es aprender a crear nodos ROS 2 en Python desde cero, partiendo de los conceptos básicos (publisher y subscriber) hasta construir un nodo completo de teleoperación por teclado para el PhantomX Pincher.
-
-La guía está organizada como una serie de videos. Cada archivo en esta carpeta corresponde a un video y cubre un concepto específico de forma aislada, de modo que al llegar al nodo final todo ya haya sido explicado por partes.
+Serie de videos sobre cómo crear nodos ROS 2 en Python para el PhantomX Pincher,
+desde publisher/subscriber hasta un nodo de teleoperación por teclado.
 
 ---
 
-## Archivos de la serie
+## Parte 1 — Publishers y subscribers
 
-### Video 1 – Publisher: `ejemplo_publisher.py`
+Guía: [ros2_basics_part1_publisher_and_subscriber.md](./ros2_basics_part1_publisher_and_subscriber.md)
 
-Introduce los conceptos fundamentales de un nodo ROS 2:
+| Capítulo | Tema | Video |
+|----------|------|-------|
+| 1 | Introducción a ROS 2 básico | [ver](https://www.youtube.com/watch?v=j1m0AffoNac) |
+| 2 | Nodos, workspaces y paquetes | [ver](https://www.youtube.com/watch?v=KZQwFtwZieU) |
+| 3 | Creando mi primer publisher | [ver](https://www.youtube.com/watch?v=l2Yy4gGGv5A) |
+| 4 | Creando mi primer subscriber | [ver](https://www.youtube.com/watch?v=gwu9l_zS1Qc) |
 
-- Qué es un nodo y cómo se define con `rclpy.Node`
-- Qué es un tópico y cómo publicar en él con `create_publisher`
-- Cómo ejecutar código de forma periódica con `create_timer`
-- Cómo construir y enviar un mensaje (`std_msgs/String`)
+## Parte 2 — Mover el robot
 
-El nodo publica el nombre de un estado del robot en `/named_target` cada 3 segundos.
+Guía: [ros2_basics_part2_moving_the_robot.md](./ros2_basics_part2_moving_the_robot.md)
 
-### Video 2 – Subscriber: `ejemplo_subscriber.py`
-
-Muestra cómo escuchar un tópico:
-
-- Cómo suscribirse con `create_subscription`
-- Qué es un callback y cuándo se ejecuta
-- Estructura del mensaje `sensor_msgs/JointState` (campos `name`, `position`, `velocity`)
-
-El nodo escucha `/joint_states` e imprime la posición de cada joint en radianes.
-
-### Video 3 – Lectura de teclado: `ejemplo_teclado.py`
-
-Script Python puro, sin ROS 2. Explica cómo leer teclas sin necesitar presionar Enter:
-
-- Qué es el modo raw del terminal y en qué se diferencia del modo normal
-- Cómo activarlo con `tty.setraw()` y `termios`
-- Por qué es obligatorio restaurar la terminal al salir (`finally`)
-- Cómo leer un carácter a la vez con `sys.stdin.read(1)`
-
-> Este script se puede correr en cualquier máquina con Python, sin necesidad de ROS 2.
-
-### Video 4 – Detección de movimiento: `ejemplo_deteccion_movimiento.py`
-
-Extiende el subscriber del Video 2 añadiendo la lógica para saber si el robot se está moviendo o se detuvo:
-
-- Por qué se comparan posiciones consecutivas (delta)
-- Cómo elegir el umbral de movimiento (`UMBRAL_MOVIMIENTO`)
-- Por qué se necesita una bandera `_robot_moviendose` (el robot tarda en arrancar)
-- Por qué no basta con una sola lectura quieta (`LECTURAS_ESTABLES`)
-
-El nodo imprime en consola cuándo el robot arranca y cuándo se detiene.
-
-### Video 5 – Mover el robot: `ejemplo_mover_robot.py`
-
-Primer nodo que realmente mueve el robot. Combina el publisher del Video 1 con un timer para enviar una secuencia de posiciones predefinidas:
-
-- Cómo publicar en `/named_target` para mover el robot a un estado del SRDF
-- Por qué se usa un tiempo fijo de espera entre posiciones
-- Cómo cerrar el nodo limpiamente cuando la tarea termina (`SystemExit`)
-
-El nodo recorre la lista `SECUENCIA`, publica cada posición y se cierra al terminar.
-
-### Video 6 – Teleop completo: `teleop_keyboard.py`
-
-> El archivo final se encuentra en:
-> `phantom_ws/src/pincher_control/pincher_control/teleop_keyboard.py`
-
-Combina todos los conceptos anteriores en un único nodo:
-
-- Publisher en `/named_target` (Video 1)
-- Subscriber en `/joint_states` con detección de movimiento (Videos 2 y 4)
-- Lectura de teclado en modo raw (Video 3)
-- `threading` para que el spin de ROS 2 y el bucle del teclado corran en paralelo
-- `threading.Event` para bloquear el teclado mientras el robot se mueve
+| Capítulo | Tema | Script | Video |
+|----------|------|--------|-------|
+| 5 | Lectura inmediata de teclado | [ejemplo_teclado.py](./ejemplo_teclado.py) | [ver](https://www.youtube.com/watch?v=b5FdVRdaViI) |
+| 6 | Detección de movimiento | [ejemplo_deteccion_movimiento.py](./ejemplo_deteccion_movimiento.py) | [ver](https://www.youtube.com/watch?v=ZREPMuBVMM4) |
+| 7 | Publisher para mover el robot | [ejemplo_mover_robot.py](./ejemplo_mover_robot.py) | [ver](https://www.youtube.com/watch?v=bQ8cChUb7i4) |
 
 ---
 
-## Template
+## Otros archivos
 
-El archivo `template_node.py` contiene un esqueleto comentado con todas las secciones opcionales de un nodo (publisher, subscriber, timer, threading). Úsalo como punto de partida para crear nuevos nodos.
-
----
-
-## Cómo correr los ejemplos
-
-Los Videos 1, 2 y 4 requieren que el robot esté encendido y publicando en `/joint_states`. Lanza primero el bringup del robot:
-
-```bash
-cd ~/ros2/KIT_Phantom_X_Pincher_ROS2/phantom_ws
-. install/setup.bash
-ros2 launch phantomx_pincher_bringup phantomx_pincher.launch.py
-```
-
-Luego, en otro terminal:
-
-```bash
-. install/setup.bash
-ros2 run pincher_control <nombre_del_nodo>
-```
-
-El Video 3 (`ejemplo_teclado.py`) no necesita ROS 2 y se corre directamente:
-
-```bash
-python3 guias/Nodos/ejemplo_teclado.py
-```
-
-Para el teleop completo (Video 5):
-
-```bash
-. install/setup.bash
-ros2 run pincher_control teleop_keyboard
-```
+| Archivo | Descripción |
+|---------|-------------|
+| [template_node.py](./template_node.py) | Esqueleto comentado con todas las secciones opcionales de un nodo (publisher, subscriber, timer, threading) |
