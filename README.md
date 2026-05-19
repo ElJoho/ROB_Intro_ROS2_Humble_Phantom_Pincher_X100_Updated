@@ -52,6 +52,24 @@ Para probar el funcionamiento del robot se puede usar el programa Dynamixel Wiza
 <br>
 
 
+### Conexión SFTP en VS Code (Recomendado)
+
+Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry Pi usando una extensión de SSH. El proceso para realizar esto se encuentra en la siguiente guía:
+
+
+[Guia: Configuración SSH en VS Code](guias/Setup/sftp_vscode.md)
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=CL0vpqbWdjM">Como usar visual studio code SFTP para conectarse a raspberry pi</a>
+  </summary>
+</details>
+<br>
+
+> **Importante:** Este NO consume RAM de las raspberry pi
+> PERO requiere sincronizar constantemente la carpeta de windows
+> con la carpeta de la raspberry pi.
+
 ### Conexión SSH en VS Code
 
 Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry Pi usando una extensión de SSH. El proceso para realizar esto se encuentra en la siguiente guía:
@@ -65,6 +83,10 @@ Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry P
   </summary>
 </details>
 <br>
+
+> **Importante:** Este metodo consume RAM de las raspberry pi
+> pero permite modificar los archivos directamente.
+
 
 ---
 

@@ -5,6 +5,13 @@
 Esta guía explica cómo configurar la extensión [SFTP (Natizykunk)](https://marketplace.visualstudio.com/items?itemName=Natizykunk.sftp)
 para editar el workspace de la Raspberry Pi directamente desde VS Code en Windows.
 
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=CL0vpqbWdjM">UNAL PhantomX Pincher: Como usar visual studio code SFTP para conectarse a raspberry pi</a>
+  </summary>
+</details>
+<br>
+
 ---
 
 ## Datos de conexión
