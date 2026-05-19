@@ -35,6 +35,9 @@ cmake-build-*/
 
 # VS Code
 .vscode/
+
+# Claude Code
+.claude/
 *.vc.db*
 *.db-wal
 *.db-shm
