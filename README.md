@@ -46,7 +46,7 @@ Para probar el funcionamiento del robot se puede usar el programa Dynamixel Wiza
 
 <details>
   <summary>
-    <b>Video tutorial</b> — <a https://www.youtube.com/watch?v=VNw8zVJwRWo">Como usar Dynamixel Wizard 2.0</a>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=VNw8zVJwRWo" >Como usar Dynamixel Wizard 2.0</a>
   </summary>
 </details>
 <br>
@@ -133,3 +133,17 @@ Para mover el robot puede leer la guia o ver el video que se muestran a continua
 ### Calibración del gripper
 
 [Guia: Calibración del gripper](guias/Setup/guia_calibracion_gripper.md)
+
+---
+
+## APRENDE ROS2
+
+Se recomienda ver el [indice sobre las guias de ros2_basics](guias/ROS2_basics/README.md) el cual cuenta con enlaces a las guias disponibles asi como menciona videos tutoriales que pueden ver.
+
+A continuacion se listan las guias disponibles:
+
+1. [Guía:  Parte 1 — Publishers y subscribers](guias/ROS2_basics/ros2_basics_part1_publisher_and_subscriber.md)
+
+2. [Guía: Parte 2 — Mover el robot](guias/ROS2_basics/ros2_basics_part2_moving_the_robot.md)
+
+
