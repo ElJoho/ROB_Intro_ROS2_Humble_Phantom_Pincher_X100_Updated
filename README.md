@@ -70,6 +70,27 @@ Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry P
 > PERO requiere sincronizar constantemente la carpeta de windows
 > con la carpeta de la raspberry pi.
 
+### Conexion usando Samba
+
+La conexión mediante Samba permite acceder a los archivos de la Raspberry Pi desde Windows como si fueran una carpeta compartida en red. Esto facilita editarlos con IDEs de Windows, así como copiar, pegar o arrastrar archivos directamente. Aunque requiere instalar Samba en la Raspberry y configurarlo en Windows, una vez listo resulta muy cómodo, especialmente para proyectos grandes.
+
+
+[Guia: Configuración Samba en Raspberry pi y windows](guias/Setup/guiaSamba.md)
+
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=cnAaOMN6Adk">Como usar Samba para conectarse a raspberry pi</a>
+  </summary>
+</details>
+<br>
+
+> **Importante:** Este NO consume RAM de las raspberry pi
+> PERO requiere de reconectar constantemente las raspberry 
+> y windows por medio del uso de windows powershell cada vez
+> que se conecta la raspberry al PC al usar el comando:
+> net use Z: \\192.168.10.2\unpi /user:unpi unpi /persistent:no
+
 ### Conexión SSH en VS Code
 
 Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry Pi usando una extensión de SSH. El proceso para realizar esto se encuentra en la siguiente guía:
