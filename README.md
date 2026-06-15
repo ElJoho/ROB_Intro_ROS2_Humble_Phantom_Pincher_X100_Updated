@@ -98,8 +98,9 @@ La conexión mediante Samba permite acceder a los archivos de la Raspberry Pi de
 > **Importante:** Este NO consume RAM de las raspberry pi
 > PERO requiere de reconectar constantemente las raspberry 
 > y windows por medio del uso de windows powershell cada vez
-> que se conecta la raspberry al PC al usar el comando:
-> net use Z: \\192.168.10.2\unpi /user:unpi unpi /persistent:no
+> que se conecta la raspberry al PC al usar el comando en 
+> windows powershell (NO ejecutar como administrador):
+> net use Z: \\192.168.10.2\unpi /user:unpi unpi /persistent:nes
 
 ### Conexión SSH en VS Code
 
