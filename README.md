@@ -6,6 +6,16 @@
 **Director:** Pedro Fabián Cárdenas Herrera 
 
 ---
+## EN CASO DE EMERGENCIA
+
+Si han dañado el sistema operativo de la raspberry pi instalando algo, pueden reestablecer el sistema con ubuntu 24.04 y todo instalado y configurado (nomachine,ros2, opencv, etc) siguiendo el tutorial del repositorio ([UNPi5_Image_Ubuntu24_04](https://github.com/labsir-un/UNPi5_Image_Ubuntu24_04.git))
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=L0ZhnwBIGkc">Reestablecer sistema de raspberry pi 5 usando el backup</a>
+  </summary>
+</details>
+<br>
 
 ## Iniciando
 
@@ -168,3 +178,14 @@ A continuacion se listan las guias disponibles:
 2. [Guía: Parte 2 — Mover el robot](guias/ROS2_basics/ros2_basics_part2_moving_the_robot.md)
 
 
+---
+
+## REPOSITORIOS RELACIONADOS
+
+### Repositorio con todos los modelos 3D usados en el desarrollo del kit
+
+[UNPi5_Image_Ubuntu24_04](https://github.com/labsir-un/UNPi5_Image_Ubuntu24_04.git)
+
+### Repositorio con el back up del sistema operativo de la raspberry pi 5
+
+[3DModels_KIT_Phantom_Pincher_X100](https://github.com/labsir-un/3DModels_KIT_Phantom_Pincher_X100.git)
