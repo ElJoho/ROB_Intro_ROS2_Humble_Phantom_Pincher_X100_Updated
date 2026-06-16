@@ -190,3 +190,18 @@ A continuacion se listan las guias disponibles:
 ### Repositorio con el back up del sistema operativo de la raspberry pi 5
 
 [3DModels_KIT_Phantom_Pincher_X100](https://github.com/labsir-un/3DModels_KIT_Phantom_Pincher_X100.git)
+
+---
+
+## Como hacer un Back up
+
+Si el profesor, monitor o estudiantes fuesen a añadir o modificar el sistema operativo, es posible que necesiten hacer un back up del mismo. La siguiente guia y tutorial.
+
+[Crear un backup del sistema de la Raspberry Pi 5 con Disks (Ubuntu 24.04)](guias/Setup/backupRaspberryPi.md)
+
+<details>
+  <summary>
+    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=gqHvcgRHNKI"> Crear Backup del sistema de raspberry pi 5 usando Disks en Ubuntu 24.04</a>
+  </summary>
+</details>
+<br>
