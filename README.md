@@ -67,7 +67,7 @@ Para probar el funcionamiento del robot se puede usar el programa Dynamixel Wiza
 Es posible usar Visual Studio Code para editar y subir archivos a la Raspberry Pi usando una extensión de SSH. El proceso para realizar esto se encuentra en la siguiente guía:
 
 
-[Guia: Configuración SSH en VS Code](guias/Setup/sftp_vscode.md)
+[Guia: Edición remota con la extensión SFTP de VS Code](guias/Setup/sftp_vscode.md)
 
 <details>
   <summary>
@@ -133,16 +133,21 @@ Para observar la guía de cómo hacer la instalación de ROS2 en Ubuntu 24.04 LT
 
 ### Añadiendo elementos al robot
 
-<details>
-  <summary>
-    <b>Video tutorial</b> — <a href="https://www.youtube.com/watch?v=CDmSgoLtIdU">Como mover el robot (Mottion commands)</a>
-  </summary>
-</details>
-<br>
 
 En la siguiente guia se encuentra una serie de pasos para añadir elementos xacro al robot para su visualizaci´on en rviz. Adicionalmente hay una serie de 10 videos explicando las distintas maneras en que se pueden añadir elementos para modificar la plataforma del robot o al brazo robotico. Adicionalmente se explica como usar la ventosa en el video final.
 
 [Guia: Añadir elementos xacro al robot](guias/URDF/addingXacroElements.md)
+
+<details>
+  <summary>
+    <b>Video tutorial. Ep. 1</b> — <a href="https://www.youtube.com/watch?v=12hgfwh_EL4">Introducción a URDF</a>
+  </summary>
+</details>
+<br>
+
+<details>
+  <summary><b>Ep. 10</b> — <a href="https://www.youtube.com/watch?v=GsfinJpJwyY">Cambiar posición del TCP</a></summary>
+</details>
 
 ---
 
@@ -185,11 +190,12 @@ A continuacion se listan las guias disponibles:
 
 ### Repositorio con todos los modelos 3D usados en el desarrollo del kit
 
-[UNPi5_Image_Ubuntu24_04](https://github.com/labsir-un/UNPi5_Image_Ubuntu24_04.git)
+[3DModels_KIT_Phantom_Pincher_X100](https://github.com/labsir-un/3DModels_KIT_Phantom_Pincher_X100.git)
 
 ### Repositorio con el back up del sistema operativo de la raspberry pi 5
 
-[3DModels_KIT_Phantom_Pincher_X100](https://github.com/labsir-un/3DModels_KIT_Phantom_Pincher_X100.git)
+[UNPi5_Image_Ubuntu24_04](https://github.com/labsir-un/UNPi5_Image_Ubuntu24_04.git)
+
 
 ---
 
